@@ -1,0 +1,60 @@
+name: Backend Deploy
+# GitHub Actions 탭에 표시되는 이름
+
+on:
+  push:
+    branches: [main]
+# main에 머지(push)될 때 실행
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    # GitHub이 제공하는 우분투 서버에서 실행
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        # 레포 코드를 서버에 내려받기
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+        # GitHub Secrets에 저장한 AWS 키로 인증
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+        # ECR에 docker login
+
+      - name: Build and push Docker image to ECR
+        id: build-image
+        env:
+          ECR_REGISTRY: ${{ secrets.ECR_REGISTRY }}
+          ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
+        # 커밋 SHA를 태그로 사용해 이미지 빌드 후 ECR에 push
+
+      - name: Fill in the new image ID in the ECS task definition
+        id: task-def
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: ecs/task-definition.json
+          container-name: ${{ secrets.CONTAINER_NAME }}
+          image: ${{ steps.build-image.outputs.image }}
+        # task-definition.json의 이미지 URI를 새 이미지로 교체
+
+      - name: Deploy to ECS
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+        with:
+          task-definition: ${{ steps.task-def.outputs.task-definition }}
+          service: ${{ secrets.ECS_SERVICE }}
+          cluster: ${{ secrets.ECS_CLUSTER }}
+          wait-for-service-stability: true
+        # 새 Task Definition 등록 후 ECS 서비스 업데이트
+        # wait-for-service-stability: 배포 완료될 때까지 Actions가 대기

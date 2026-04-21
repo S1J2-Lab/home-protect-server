@@ -1,0 +1,31 @@
+{
+  "family": "home-protect-server-task",
+  "taskRoleArn": "arn:aws:iam::641628981583:role/ecsTaskExecutionRole",
+  "executionRoleArn": "arn:aws:iam::641628981583:role/ecsTaskExecutionRole",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["EC2"],
+  "cpu": "512",
+  "containerDefinitions": [
+    {
+      "name": "home-protect-server",
+      "image": "641628981583.dkr.ecr.ap-northeast-2.amazonaws.com/home-protect-server:latest",
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": 8080,
+          "protocol": "tcp"
+        }
+      ],
+      "memory": 768,
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/home-protect-server-task",
+          "awslogs-region": "ap-northeast-2",
+          "awslogs-stream-prefix": "ecs",
+          "awslogs-create-group": "true"
+        }
+      }
+    }
+  ]
+}
