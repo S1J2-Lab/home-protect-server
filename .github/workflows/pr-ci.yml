@@ -5,6 +5,10 @@ on:
   pull_request:
 # base branch 제한 없이 PR이면 CI 수행
 
+permissions:
+  contents: read
+# 코드 읽기 권한만 허용 (public repo 최소 권한)
+
 jobs:
   check:
     runs-on: ubuntu-latest
