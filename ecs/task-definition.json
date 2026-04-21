@@ -2,9 +2,8 @@
   "family": "home-protect-server-task",
   "taskRoleArn": "arn:aws:iam::641628981583:role/ecsTaskExecutionRole",
   "executionRoleArn": "arn:aws:iam::641628981583:role/ecsTaskExecutionRole",
-  "networkMode": "awsvpc",
+  "networkMode": "bridge",
   "requiresCompatibilities": ["EC2"],
-  "cpu": "512",
   "containerDefinitions": [
     {
       "name": "home-protect-server",
@@ -13,6 +12,7 @@
       "portMappings": [
         {
           "containerPort": 8080,
+          "hostPort": 8080,
           "protocol": "tcp"
         }
       ],
