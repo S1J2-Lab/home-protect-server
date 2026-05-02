@@ -44,7 +44,7 @@ public class AddressService {
             .retrieve()
             .bodyToMono(JsonNode.class)
             .flatMap(root -> {
-                log.info("행안부 API 응답: {}", root);
+                log.debug("행안부 API 응답 totalCount: {}", root.path("results").path("common").path("totalCount").asText());
                 try {
                     validateResponse(root);
                     return Mono.just(parseJusoList(root.path("results").path("juso")));
