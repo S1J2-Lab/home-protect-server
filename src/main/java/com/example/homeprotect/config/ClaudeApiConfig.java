@@ -1,5 +1,6 @@
 package com.example.homeprotect.config;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -9,6 +10,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 // + BaseApiConfig 상속으로 retryFilter() 공통화, ExchangeFilterFunction import 제거
 @Configuration
+@ConditionalOnProperty(name = "claude.api.api-key")
 // 타입 안정성을 위해 @Value 대신 Type-safe Properties(record)를 활용
 @EnableConfigurationProperties(ClaudeApiConfig.ClaudeProperties.class)
 public class ClaudeApiConfig extends BaseApiConfig {
