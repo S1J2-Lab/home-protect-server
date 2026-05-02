@@ -10,14 +10,12 @@ import org.springframework.web.reactive.function.client.ExchangeFilterFunction;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.util.UriComponentsBuilder;
 import reactor.core.publisher.Mono;
-import reactor.util.retry.Retry;
 
-import java.time.Duration;
-
+// + BaseApiConfig 상속으로 retryFilter() 공통화, Retry/Duration import 제거
 @Configuration
 // 타입 안정성을 위해 @Value 대신 Type-safe Properties(record)를 활용
 @EnableConfigurationProperties(GeminiApiConfig.GeminiProperties.class)
-public class GeminiApiConfig {
+public class GeminiApiConfig extends BaseApiConfig {
 
     public static final String API_KEY_PARAM = "key";
 
@@ -38,7 +36,7 @@ public class GeminiApiConfig {
             .clone()
             .baseUrl(properties.baseUrl())
             .filter(appendApiKeyFilter())
-            .filter(retryFilter())
+            .filter(retryFilter()) // + BaseApiConfig의 공통 retryFilter() 사용
             .clientConnector(new ReactorClientHttpConnector(
                 WebClientConfig.buildHttpClient(5_000, properties.timeout())))
             .build();
@@ -51,14 +49,5 @@ public class GeminiApiConfig {
                 .build().toUri();
             return Mono.just(ClientRequest.from(request).url(uri).build());
         });
-    }
-
-    // 일시적인 503 오류나 타임아웃 발생 시 3번까지 재시도
-    private ExchangeFilterFunction retryFilter() {
-        return (request, next) -> next.exchange(request)
-            .retryWhen(Retry.fixedDelay(3, Duration.ofSeconds(1))
-                // 일반 IO 오류뿐만 아니라 Reactor Netty의 갑작스러운 연결 종료도 재시도 대상으로 포함
-                .filter(throwable -> throwable instanceof java.io.IOException
-                    || throwable instanceof reactor.netty.http.client.PrematureCloseException));
     }
 }

@@ -5,16 +5,13 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
-import org.springframework.web.reactive.function.client.ExchangeFilterFunction;
 import org.springframework.web.reactive.function.client.WebClient;
-import reactor.util.retry.Retry;
 
-import java.time.Duration;
-
+// + BaseApiConfig 상속으로 retryFilter() 공통화, ExchangeFilterFunction import 제거
 @Configuration
 // 타입 안정성을 위해 @Value 대신 Type-safe Properties(record)를 활용
 @EnableConfigurationProperties(ClaudeApiConfig.ClaudeProperties.class)
-public class ClaudeApiConfig {
+public class ClaudeApiConfig extends BaseApiConfig {
 
     public static final String ANTHROPIC_VERSION_HEADER = "anthropic-version";
     public static final String ANTHROPIC_VERSION_VALUE = "2023-06-01";
@@ -38,18 +35,9 @@ public class ClaudeApiConfig {
             .baseUrl(properties.baseUrl())
             .defaultHeader(API_KEY_HEADER, properties.apiKey())
             .defaultHeader(ANTHROPIC_VERSION_HEADER, ANTHROPIC_VERSION_VALUE)
-            .filter(retryFilter())
+            .filter(retryFilter()) // + BaseApiConfig의 공통 retryFilter() 사용
             .clientConnector(new ReactorClientHttpConnector(
                 WebClientConfig.buildHttpClient(5_000, properties.timeout())))
             .build();
-    }
-
-    // 일시적인 503 오류나 타임아웃 발생 시 3번까지 재시도
-    private ExchangeFilterFunction retryFilter() {
-        return (request, next) -> next.exchange(request)
-            .retryWhen(Retry.fixedDelay(3, Duration.ofSeconds(1))
-                // 일반 IO 오류뿐만 아니라 Reactor Netty의 갑작스러운 연결 종료도 재시도 대상으로 포함
-                .filter(throwable -> throwable instanceof java.io.IOException
-                    || throwable instanceof reactor.netty.http.client.PrematureCloseException));
     }
 }
