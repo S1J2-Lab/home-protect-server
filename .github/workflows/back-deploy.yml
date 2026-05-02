@@ -41,6 +41,13 @@ jobs:
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
           echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
         # 커밋 SHA + latest 태그로 이미지 빌드 후 ECR에 push
+      # 배포 시크릿 키 추가
+      - name: Inject secrets into task definition
+        run: |
+          sed -i 's|REPLACE_MOIS|${{ secrets.EXTERNAL_MOIS_ADDRESS_KEY }}|g' ecs/task-definition.json
+          sed -i 's|REPLACE_SEOUL_TRADE|${{ secrets.EXTERNAL_SEOUL_REAL_TRADE_KEY }}|g' ecs/task-definition.json
+          sed -i 's|REPLACE_MOLIT|${{ secrets.EXTERNAL_MOLIT_BUILDING_KEY }}|g' ecs/task-definition.json
+          sed -i 's|REPLACE_SEOUL_RENT|${{ secrets.EXTERNAL_SEOUL_RENT_KEY }}|g' ecs/task-definition.json
 
       - name: Fill in the new image ID in the ECS task definition
         id: task-def

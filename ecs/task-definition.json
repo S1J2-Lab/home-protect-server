@@ -17,6 +17,13 @@
         }
       ],
       "memory": 768,
+      "environment": [
+        { "name": "SPRING_PROFILES_ACTIVE", "value": "prod" },
+        { "name": "EXTERNAL_MOIS_ADDRESS_KEY", "value": "REPLACE_MOIS" },
+        { "name": "EXTERNAL_SEOUL_REAL_TRADE_KEY", "value": "REPLACE_SEOUL_TRADE" },
+        { "name": "EXTERNAL_MOLIT_BUILDING_KEY", "value": "REPLACE_MOLIT" },
+        { "name": "EXTERNAL_SEOUL_RENT_KEY", "value": "REPLACE_SEOUL_RENT" }
+      ],
       "logConfiguration": {
         "logDriver": "awslogs",
         "options": {
