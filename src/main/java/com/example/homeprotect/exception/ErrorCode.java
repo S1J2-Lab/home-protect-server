@@ -24,7 +24,10 @@ public enum ErrorCode {
     GEMINI_CALL_FAILED(502, "Gemini API 호출에 실패했습니다."),
 
     // 인프라
-    VECTOR_DB_FAILED(500, "판례 검색에 실패했습니다.");
+    VECTOR_DB_FAILED(500, "판례 검색에 실패했습니다."),
+
+    // 공통
+    INTERNAL_ERROR(500, "예기치 못한 오류가 발생했습니다.");
 
     private final int status;
     private final String message;
