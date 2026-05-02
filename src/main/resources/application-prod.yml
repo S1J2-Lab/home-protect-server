@@ -1,8 +1,0 @@
-# application-prod.yml
-claude:
-  api:
-    api-key: ${CLAUDE_API_KEY}
-    base-url: https://api.anthropic.com
-    model: claude-sonnet-4-5       # registry_parse + contract_review (독소조항 탐지)
-    max-tokens: 2000
-    timeout: 30000               # 30s — AI 분석 최대 응답 대기

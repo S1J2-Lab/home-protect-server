@@ -6,13 +6,29 @@ spring:
   application:
     name: home-protect
   profiles:
-    active: dev
+    default: dev # active -> default
   data:
     redis:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
       password: ${REDIS_PASSWORD:}
       timeout: 3000ms
+
+# 변경: 두 API 모두 항상 로드되도록 공통 설정으로 이동
+gemini:
+  api:
+    api-key: ${GEMINI_API_KEY} #ocr 요약시 사용
+    base-url: https://generativelanguage.googleapis.com
+    model: gemini-2.0-flash
+    timeout: 20000
+
+claude:
+  api:
+    api-key: ${CLAUDE_API_KEY} #독소조항 판례DB 비교 출력시 사용
+    base-url: https://api.anthropic.com
+    model: claude-sonnet-4-5       # registry_parse + contract_review (독소조항 탐지)
+    max-tokens: 2000
+    timeout: 30000               # 30s — AI 분석 최대 응답 대기
 
 public-api:
   external:
