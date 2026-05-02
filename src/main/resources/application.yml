@@ -7,47 +7,36 @@ spring:
     name: home-protect
   profiles:
     default: dev # active -> default
-  data:
-    redis:
-      host: ${REDIS_HOST:localhost}
-      port: ${REDIS_PORT:6379}
-      password: ${REDIS_PASSWORD:}
-      timeout: 3000ms
-
-# 변경: 두 API 모두 항상 로드되도록 공통 설정으로 이동
-gemini:
-  api:
-    api-key: ${GEMINI_API_KEY} #ocr 요약시 사용
-    base-url: https://generativelanguage.googleapis.com
-    model: gemini-2.0-flash
-    timeout: 20000
-
-claude:
-  api:
-    api-key: ${CLAUDE_API_KEY} #독소조항 판례DB 비교 출력시 사용
-    base-url: https://api.anthropic.com
-    model: claude-sonnet-4-5       # registry_parse + contract_review (독소조항 탐지)
-    max-tokens: 2000
-    timeout: 30000               # 30s — AI 분석 최대 응답 대기
+#  data: #현재 주석들은 추후에 구현하며 진행할 예정
+#    redis:
+#      timeout: 3000ms
+#
+#gemini:
+#  api: #ocr 요약시 사용
+#    base-url: https://generativelanguage.googleapis.com
+#    model: gemini-2.0-flash
+#    timeout: 20000
+#
+#claude:
+#  api: #독소조항 판례DB 비교 출력시 사용
+#    base-url: https://api.anthropic.com
+#    model: claude-sonnet-4-5       # registry_parse + contract_review (독소조항 탐지)
+#    max-tokens: 2000
+#    timeout: 30000               # 30s — AI 분석 최대 응답 대기
 
 public-api:
   external:
     # 1. 서울시: 부동산 실거래가 정보
-    seoul-real-trade-url: ${EXTERNAL_SEOUL_REAL_TRADE_URL}
-    seoul-real-trade-key: ${EXTERNAL_SEOUL_REAL_TRADE_KEY}
+    seoul-real-trade-url: http://openapi.seoul.go.kr:8088
 
     # 2. 국토교통부: 건축물대장 서비스
-    molit-building-url: ${EXTERNAL_MOLIT_BUILDING_URL}
-    molit-building-key: ${EXTERNAL_MOLIT_BUILDING_KEY}
+    molit-building-url: https://apis.data.go.kr/1613000/BldRgstHubService
 
     # 3. 서울시: 부동산 전월세가 정보
-    seoul-rent-url: ${EXTERNAL_SEOUL_RENT_URL}
-    seoul-rent-key: ${EXTERNAL_SEOUL_RENT_KEY}
+    seoul-rent-url:  http://openapi.seoul.go.kr:8088
 
     # 4. 행정안전부: 실시간 주소정보 조회
-    mois-address-url: ${EXTERNAL_MOIS_ADDRESS_URL}
-    mois-address-key: ${EXTERNAL_MOIS_ADDRESS_KEY}
-
+    mois-address-url: https://business.juso.go.kr/addrlink/addrLinkApi.do
     timeout: 10000
 
 session:
