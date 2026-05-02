@@ -1,0 +1,22 @@
+# application-prod.yml
+spring:
+#  data: #현재 주석들은 추후에 구현하며 진행할 예정
+#    redis:
+#      host: ${REDIS_HOST}
+#      port: ${REDIS_PORT:6379}
+#      password: ${REDIS_PASSWORD}
+#
+#gemini:
+#  api:
+#    api-key: ${GEMINI_API_KEY}
+#
+#claude:
+#  api:
+#    api-key: ${CLAUDE_API_KEY}
+
+public-api:
+  external:
+    seoul-real-trade-key: ${EXTERNAL_SEOUL_REAL_TRADE_KEY}
+    molit-building-key: ${EXTERNAL_MOLIT_BUILDING_KEY}
+    seoul-rent-key: ${EXTERNAL_SEOUL_RENT_KEY}
+    mois-address-key: ${EXTERNAL_MOIS_ADDRESS_KEY}
