@@ -1,3 +1,38 @@
+# application.yml (공통 설정)
+server:
+  port: 8080
+
 spring:
   application:
     name: home-protect
+  profiles:
+    active: dev
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      timeout: 3000ms
+
+public-api:
+  external:
+    # 1. 서울시: 부동산 실거래가 정보
+    seoul-real-trade-url: ${EXTERNAL_SEOUL_REAL_TRADE_URL}
+    seoul-real-trade-key: ${EXTERNAL_SEOUL_REAL_TRADE_KEY}
+
+    # 2. 국토교통부: 건축물대장 서비스
+    molit-building-url: ${EXTERNAL_MOLIT_BUILDING_URL}
+    molit-building-key: ${EXTERNAL_MOLIT_BUILDING_KEY}
+
+    # 3. 서울시: 부동산 전월세가 정보
+    seoul-rent-url: ${EXTERNAL_SEOUL_RENT_URL}
+    seoul-rent-key: ${EXTERNAL_SEOUL_RENT_KEY}
+
+    # 4. 행정안전부: 실시간 주소정보 조회
+    mois-address-url: ${EXTERNAL_MOIS_ADDRESS_URL}
+    mois-address-key: ${EXTERNAL_MOIS_ADDRESS_KEY}
+
+    timeout: 10000
+
+session:
+  ttl-minutes: 30               # Redis session TTL — 만료 시 E-6 오류 반환

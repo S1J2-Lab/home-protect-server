@@ -1,0 +1,7 @@
+# application-dev.yml
+gemini:
+  api:
+    api-key: ${GEMINI_API_KEY}
+    base-url: https://generativelanguage.googleapis.com
+    model: gemini-2.0-flash
+    timeout: 20000
