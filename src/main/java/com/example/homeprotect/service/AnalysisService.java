@@ -25,7 +25,7 @@ public class AnalysisService {
     }
 
     public Mono<String> initAnalysis(AnalysisInitRequest request, String ocrSessionId) {
-        if (!VALID_CONTRACT_TYPES.contains(request.getContractType())) {
+        if (request.getContractType() == null || !VALID_CONTRACT_TYPES.contains(request.getContractType())) {
             return Mono.error(new HomeProtectException(ErrorCode.INVALID_CONTRACT_TYPE));
         }
         InitSessionData sessionData = InitSessionData.builder()
