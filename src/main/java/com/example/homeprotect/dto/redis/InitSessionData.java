@@ -13,6 +13,7 @@ public class InitSessionData {
     private String ocrSessionId;
     private String address;
     private String admCd;
+    private String bdMgtSn;
     private String rnMgtSn;
     private String mno;
     private String sno;
@@ -20,6 +21,7 @@ public class InitSessionData {
     private Long monthlyRent;
     private String contractType;
     private ContractPeriod contractPeriod;
+
 
     @Getter
     @Builder
