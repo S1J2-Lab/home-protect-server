@@ -96,6 +96,7 @@ public class AddressService {
                 .rnMgtSn(juso.path("rnMgtSn").asText())
                 .mno(String.format("%04d", juso.path("buldMnnm").asInt()))  // 추가
                 .sno(String.format("%04d", juso.path("buldSlno").asInt()))  // 추가
+                .bdMgtSn(juso.path("bdMgtSn").asText())
                 .build());
         }
         return results;
