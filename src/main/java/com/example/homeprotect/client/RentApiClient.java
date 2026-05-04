@@ -110,14 +110,14 @@ public class RentApiClient {
     }
 
     private String buildUri(int start, int end, String year, String cggCd, String bldgUsg) {
-        UriComponentsBuilder builder = UriComponentsBuilder
-            .fromUriString(baseUrl)
-            .pathSegment(apiKey, "json", serviceName,
-                String.valueOf(start), String.valueOf(end), year, cggCd);
-        if (bldgUsg != null && !bldgUsg.isEmpty()) {
-            builder.pathSegment(bldgUsg);
-        }
-        return builder.build().encode(StandardCharsets.UTF_8).toUriString();
+      StringBuilder path = new StringBuilder("/")
+          .append(apiKey).append("/json/").append(serviceName).append("/")
+          .append(start).append("/").append(end).append("/")
+          .append(year).append("/").append(cggCd);
+      if (bldgUsg != null && !bldgUsg.isEmpty()) {
+        path.append("/").append(bldgUsg);
+      }
+      return baseUrl + path;
     }
 
     private List<Long> parseJeonseAmounts(JsonNode root, String cutoffDate,
