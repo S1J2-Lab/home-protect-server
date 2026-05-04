@@ -5,6 +5,7 @@ import java.time.Duration;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import org.springframework.stereotype.Component;
 
+import com.example.homeprotect.dto.redis.InitSessionData;
 import com.example.homeprotect.dto.redis.OcrSessionData;
 import com.example.homeprotect.exception.ErrorCode;
 import com.example.homeprotect.exception.HomeProtectException;
@@ -17,6 +18,7 @@ import reactor.core.publisher.Mono;
 public class RedisUtil {
 
     private static final String OCR_KEY_PREFIX = "ocr:";
+    private static final String INIT_KEY_PREFIX = "init:";
     private static final Duration OCR_TTL = Duration.ofMinutes(30);
 
     private final ReactiveRedisTemplate<String, String> reactiveRedisTemplate;
@@ -32,6 +34,20 @@ public class RedisUtil {
         return serialize(data)
                 .flatMap(json -> reactiveRedisTemplate.opsForValue().set(key, json, OCR_TTL))
                 .then();
+    }
+
+    public Mono<Void> saveInitSession(InitSessionData data) {
+        String key = INIT_KEY_PREFIX + data.getSessionId();
+        return serialize(data)
+                .flatMap(json -> reactiveRedisTemplate.opsForValue().set(key, json, OCR_TTL))
+                .then();
+    }
+
+    public Mono<InitSessionData> getInitSession(String sessionId) {
+        String key = INIT_KEY_PREFIX + sessionId;
+        return reactiveRedisTemplate.opsForValue().get(key)
+                .switchIfEmpty(Mono.error(new HomeProtectException(ErrorCode.SESSION_EXPIRED)))
+                .flatMap(json -> deserialize(json, InitSessionData.class));
     }
 
     public Mono<OcrSessionData> getOcrSession(String sessionId) {
