@@ -35,8 +35,12 @@ public class JeonseRatioService {
             return redisUtil.saveJeonseRatio(sessionData.getSessionId(), monthly);
         }
 
-        String cggCd = sessionData.getAdmCd().substring(0, 5);
-        String stdgCd = sessionData.getAdmCd().substring(5, 10);
+        String admCd = sessionData.getAdmCd();
+        if (admCd == null || admCd.length() < 10) {
+            return Mono.error(new IllegalArgumentException("admCd가 null이거나 10자 미만입니다: " + admCd));
+        }
+        String cggCd = admCd.substring(0, 5);
+        String stdgCd = admCd.substring(5, 10);
         String mno = sessionData.getMno();
         String sno = sessionData.getSno();
         String bldgUsg = parseBldgUsg(sessionData.getAddress());
