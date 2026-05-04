@@ -10,7 +10,7 @@ public enum ErrorCode {
     // OCR 관련
     PII_DETECTED(400, "개인정보가 감지되었습니다. 가린 뒤 다시 업로드해주세요."),
     OCR_FAILED(422, "이미지를 판독할 수 없어요. 더 선명한 사진으로 다시 업로드해주세요."),
-    INVALID_FILE_TYPE(400, "이미지 파일만 업로드할 수 있어요. (jpg, png, jpeg)"),
+    INVALID_FILE_TYPE(400, "지원하지 않는 파일 형식이에요. (jpg, jpeg, png, pdf)"),
 
     // 분석 관련
     OWNER_NOT_VERIFIED(400, "등기부상 소유자와 계약서상 임대인이 동일한지 확인 후 체크해주세요."),
