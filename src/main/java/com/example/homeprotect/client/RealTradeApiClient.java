@@ -40,17 +40,21 @@ public class RealTradeApiClient {
     }
 
     public Mono<Long> fetchAverageTradeAmount(String cggCd, String bldgUsg) {
-        String cutoffDate = LocalDate.now().minusYears(2).format(DATE_FMT);
-        String thisYear = String.valueOf(LocalDate.now().getYear());
-        String lastYear = String.valueOf(LocalDate.now().getYear() - 1);
+        LocalDate today = LocalDate.now();
+        String cutoffDate = today.minusYears(2).format(DATE_FMT);
+        String thisYear = String.valueOf(today.getYear());
+        String lastYear = String.valueOf(today.getYear() - 1);
+        String twoYearsAgo = String.valueOf(today.getYear() - 2);
 
         Mono<List<Long>> thisYearData = fetchTradeByYear(thisYear, cggCd, bldgUsg, cutoffDate);
         Mono<List<Long>> lastYearData = fetchTradeByYear(lastYear, cggCd, bldgUsg, cutoffDate);
+        Mono<List<Long>> twoYearsAgoData = fetchTradeByYear(twoYearsAgo, cggCd, bldgUsg, cutoffDate);
 
-        return Mono.zip(thisYearData, lastYearData)
+        return Mono.zip(thisYearData, lastYearData, twoYearsAgoData)
             .map(tuple -> {
                 List<Long> combined = new ArrayList<>(tuple.getT1());
                 combined.addAll(tuple.getT2());
+                combined.addAll(tuple.getT3());
                 return combined.stream().mapToLong(Long::longValue).sum()
                     / Math.max(combined.size(), 1);
             });

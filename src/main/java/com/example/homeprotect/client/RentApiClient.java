@@ -46,17 +46,21 @@ public class RentApiClient {
     }
 
     public Mono<List<Long>> fetchJeonseAmounts(String cggCd, String stdgCd, String mno, String sno, String bldgUsg) {
-        String cutoffDate = LocalDate.now().minusYears(2).format(DATE_FMT);
-        String thisYear = String.valueOf(LocalDate.now().getYear());
-        String lastYear = String.valueOf(LocalDate.now().getYear() - 1);
+        LocalDate today = LocalDate.now();
+        String cutoffDate = today.minusYears(2).format(DATE_FMT);
+        String thisYear = String.valueOf(today.getYear());
+        String lastYear = String.valueOf(today.getYear() - 1);
+        String twoYearsAgo = String.valueOf(today.getYear() - 2);
 
         Mono<List<Long>> thisYearData = fetchByYear(thisYear, cggCd, stdgCd, mno, sno, bldgUsg, cutoffDate);
         Mono<List<Long>> lastYearData = fetchByYear(lastYear, cggCd, stdgCd, mno, sno, bldgUsg, cutoffDate);
+        Mono<List<Long>> twoYearsAgoData = fetchByYear(twoYearsAgo, cggCd, stdgCd, mno, sno, bldgUsg, cutoffDate);
 
-        return Mono.zip(thisYearData, lastYearData)
+        return Mono.zip(thisYearData, lastYearData, twoYearsAgoData)
             .map(tuple -> {
                 List<Long> combined = new ArrayList<>(tuple.getT1());
                 combined.addAll(tuple.getT2());
+                combined.addAll(tuple.getT3());
                 return combined;
             });
     }
