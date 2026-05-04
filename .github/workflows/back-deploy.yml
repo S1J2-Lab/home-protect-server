@@ -48,15 +48,21 @@ jobs:
           SEOUL_TRADE_KEY: ${{ secrets.EXTERNAL_SEOUL_REAL_TRADE_KEY }}
           MOLIT_KEY: ${{ secrets.EXTERNAL_MOLIT_BUILDING_KEY }}
           SEOUL_RENT_KEY: ${{ secrets.EXTERNAL_SEOUL_RENT_KEY }}
+          CLOVA_URL: ${{ secrets.CLOVA_OCR_API_URL }}
+          CLOVA_KEY: ${{ secrets.CLOVA_OCR_SECRET_KEY }}
         run: |
           jq --arg mois "$MOIS_KEY" \
              --arg trade "$SEOUL_TRADE_KEY" \
              --arg molit "$MOLIT_KEY" \
              --arg rent "$SEOUL_RENT_KEY" \
+             --arg clova_url "$CLOVA_URL" \
+             --arg clova_key "$CLOVA_KEY" \
              '(.containerDefinitions[0].environment[] | select(.name == "EXTERNAL_MOIS_ADDRESS_KEY")).value = $mois |
               (.containerDefinitions[0].environment[] | select(.name == "EXTERNAL_SEOUL_REAL_TRADE_KEY")).value = $trade |
               (.containerDefinitions[0].environment[] | select(.name == "EXTERNAL_MOLIT_BUILDING_KEY")).value = $molit |
-              (.containerDefinitions[0].environment[] | select(.name == "EXTERNAL_SEOUL_RENT_KEY")).value = $rent' \
+              (.containerDefinitions[0].environment[] | select(.name == "EXTERNAL_SEOUL_RENT_KEY")).value = $rent |
+              (.containerDefinitions[0].environment[] | select(.name == "CLOVA_OCR_API_URL")).value = $clova_url |
+              (.containerDefinitions[0].environment[] | select(.name == "CLOVA_OCR_SECRET_KEY")).value = $clova_key' \
              ecs/task-definition.json > tmp.json && mv tmp.json ecs/task-definition.json
 
       - name: Fill in the new image ID in the ECS task definition
