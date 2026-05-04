@@ -14,6 +14,8 @@ public class InitSessionData {
     private String address;
     private String admCd;
     private String rnMgtSn;
+    private String mno;
+    private String sno;
     private Long deposit;
     private Long monthlyRent;
     private String contractType;

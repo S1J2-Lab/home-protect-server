@@ -94,6 +94,8 @@ public class AddressService {
                 .buildingName(juso.path("bdNm").asText())
                 .admCd(juso.path("admCd").asText())
                 .rnMgtSn(juso.path("rnMgtSn").asText())
+                .mno(String.format("%04d", juso.path("buldMnnm").asInt()))  // 추가
+                .sno(String.format("%04d", juso.path("buldSlno").asInt()))  // 추가
                 .build());
         }
         return results;
