@@ -17,6 +17,7 @@ public enum ErrorCode {
     API_UNAVAILABLE(503, "공공데이터 서버가 일시적으로 응답하지 않아요. 잠시 후 다시 시도해주세요."),
     ANALYSIS_TIMEOUT(504, "분석 시간이 너무 오래 걸리고 있어요. 다시 시도해주세요."),
     INVALID_ADDRESS(400, "입력하신 주소로 건축물대장을 조회할 수 없어요. 주소를 다시 확인해주세요."),
+    BUILDING_INFO_NOT_FOUND(404, "해당 주소의 건축물대장 정보를 찾을 수 없어요. 주소를 다시 확인해주세요."),
     AI_PARSE_FAILED(502, "AI 분석 중 오류가 발생했어요. 다시 시도해주세요."),
     INVALID_CONTRACT_TYPE(400, "계약 유형이 올바르지 않아요. (jeonse / half_jeonse / monthly)"),
 
