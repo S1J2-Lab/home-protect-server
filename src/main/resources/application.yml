@@ -33,7 +33,6 @@ public-api:
 
     # 3. 서울시: 부동산 전월세가 정보
     seoul-rent-url:  http://openapi.seoul.go.kr:8088
-    # 실제 서비스명 서울 열린데이터광장에서 확인 후 수정 필요
     seoul-rent-service: tbLnOpendataRentV
     # 전세/월세 구분 필드명·값
     seoul-rent-type-field: RENT_SE
