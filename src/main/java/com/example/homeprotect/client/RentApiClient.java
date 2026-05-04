@@ -14,7 +14,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.util.UriComponentsBuilder;
 
-
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @Component
@@ -22,6 +22,7 @@ public class RentApiClient {
 
     private static final Logger log = LoggerFactory.getLogger(RentApiClient.class);
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("yyyyMMdd");
+    private static final int PAGE_SIZE = 1000;
 
     @Value("${public-api.external.seoul-rent-url}")
     private String baseUrl;
@@ -62,22 +63,53 @@ public class RentApiClient {
 
     private Mono<List<Long>> fetchByYear(String year, String cggCd, String stdgCd,
         String mno, String sno, String bldgUsg, String cutoffDate) {
-        String uri = buildUri(year, cggCd, bldgUsg);
-        return webClient.get()
-            .uri(uri)
-            .retrieve()
-            .bodyToMono(JsonNode.class)
-            .map(root -> parseJeonseAmounts(root, cutoffDate, cggCd, stdgCd, mno, sno)) // 파라미터 다 넘겨요
+        return fetchPage(1, PAGE_SIZE, year, cggCd, bldgUsg)
+            .flatMap(root -> {
+                List<Long> firstPage = parseJeonseAmounts(root, cutoffDate, cggCd, stdgCd, mno, sno);
+                int totalCount = root.path(serviceName).path("list_total_count").asInt();
+                if (totalCount <= PAGE_SIZE) {
+                    return Mono.just(firstPage);
+                }
+                int totalPages = (int) Math.ceil((double) totalCount / PAGE_SIZE);
+                List<Mono<List<Long>>> remainingMonos = new ArrayList<>();
+                for (int page = 2; page <= totalPages; page++) {
+                    int start = (page - 1) * PAGE_SIZE + 1;
+                    int end = page * PAGE_SIZE;
+                    final int p = page;
+                    remainingMonos.add(fetchPage(start, end, year, cggCd, bldgUsg)
+                        .map(r -> parseJeonseAmounts(r, cutoffDate, cggCd, stdgCd, mno, sno))
+                        .onErrorResume(e -> {
+                            log.error("서울시 전월세가 API 호출 실패 [{}년 {}페이지]: {}", year, p, e.getMessage());
+                            return Mono.just(new ArrayList<>());
+                        }));
+                }
+                return Flux.merge(remainingMonos)
+                    .collectList()
+                    .map(lists -> {
+                        List<Long> all = new ArrayList<>(firstPage);
+                        lists.forEach(all::addAll);
+                        return all;
+                    });
+            })
             .onErrorResume(e -> {
                 log.error("서울시 전월세가 API 호출 실패 [{}년]: {}", year, e.getMessage());
                 return Mono.just(new ArrayList<>());
             });
     }
 
-    private String buildUri(String year, String cggCd, String bldgUsg) {
+    private Mono<JsonNode> fetchPage(int start, int end, String year, String cggCd, String bldgUsg) {
+        String uri = buildUri(start, end, year, cggCd, bldgUsg);
+        return webClient.get()
+            .uri(uri)
+            .retrieve()
+            .bodyToMono(JsonNode.class);
+    }
+
+    private String buildUri(int start, int end, String year, String cggCd, String bldgUsg) {
         UriComponentsBuilder builder = UriComponentsBuilder
             .fromUriString(baseUrl)
-            .pathSegment(apiKey, "json", serviceName, "1", "1000", year, cggCd);
+            .pathSegment(apiKey, "json", serviceName,
+                String.valueOf(start), String.valueOf(end), year, cggCd);
         if (bldgUsg != null && !bldgUsg.isEmpty()) {
             builder.pathSegment(bldgUsg);
         }
@@ -91,13 +123,10 @@ public class RentApiClient {
         JsonNode rows = root.path(serviceName).path("row");
         for (JsonNode row : rows) {
             if (!cggCd.equals(row.path("CGG_CD").asText())) continue;
-            // stdgCd 있으면 법정동 필터
             if (stdgCd != null && !stdgCd.isEmpty()
                 && !stdgCd.equals(row.path("STDG_CD").asText())) continue;
-            // mno 있으면 본번 필터
             if (mno != null && !mno.isEmpty()
                 && !mno.equals(row.path("MNO").asText())) continue;
-            // sno 있으면 부번 필터
             if (sno != null && !sno.isEmpty()
                 && !sno.equals(row.path("SNO").asText())) continue;
             if (!jeonseTypeValue.equals(row.path(rentTypeField).asText())) continue;

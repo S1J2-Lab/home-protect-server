@@ -7,7 +7,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -15,6 +14,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @Component
@@ -22,6 +22,7 @@ public class RealTradeApiClient {
 
     private static final Logger log = LoggerFactory.getLogger(RealTradeApiClient.class);
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("yyyyMMdd");
+    private static final int PAGE_SIZE = 1000;
 
     @Value("${public-api.external.seoul-real-trade-url}")
     private String baseUrl;
@@ -56,22 +57,53 @@ public class RealTradeApiClient {
     }
 
     private Mono<List<Long>> fetchTradeByYear(String year, String cggCd, String bldgUsg, String cutoffDate) {
-        String uri = buildUri(year, cggCd, bldgUsg);
-        return webClient.get()
-            .uri(uri)
-            .retrieve()
-            .bodyToMono(JsonNode.class)
-            .map(root -> parseTradeAmounts(root, cutoffDate, cggCd))
+        return fetchPage(1, PAGE_SIZE, year, cggCd, bldgUsg)
+            .flatMap(root -> {
+                List<Long> firstPage = parseTradeAmounts(root, cutoffDate, cggCd);
+                int totalCount = root.path(serviceName).path("list_total_count").asInt();
+                if (totalCount <= PAGE_SIZE) {
+                    return Mono.just(firstPage);
+                }
+                int totalPages = (int) Math.ceil((double) totalCount / PAGE_SIZE);
+                List<Mono<List<Long>>> remainingMonos = new ArrayList<>();
+                for (int page = 2; page <= totalPages; page++) {
+                    int start = (page - 1) * PAGE_SIZE + 1;
+                    int end = page * PAGE_SIZE;
+                    final int p = page;
+                    remainingMonos.add(fetchPage(start, end, year, cggCd, bldgUsg)
+                        .map(r -> parseTradeAmounts(r, cutoffDate, cggCd))
+                        .onErrorResume(e -> {
+                            log.error("서울시 매매 실거래가 API 호출 실패 [{}년 {}페이지]: {}", year, p, e.getMessage());
+                            return Mono.just(new ArrayList<>());
+                        }));
+                }
+                return Flux.merge(remainingMonos)
+                    .collectList()
+                    .map(lists -> {
+                        List<Long> all = new ArrayList<>(firstPage);
+                        lists.forEach(all::addAll);
+                        return all;
+                    });
+            })
             .onErrorResume(e -> {
                 log.error("서울시 매매 실거래가 API 호출 실패 [{}년]: {}", year, e.getMessage());
                 return Mono.just(new ArrayList<>());
             });
     }
 
-    private String buildUri(String year, String cggCd, String bldgUsg) {
+    private Mono<JsonNode> fetchPage(int start, int end, String year, String cggCd, String bldgUsg) {
+        String uri = buildUri(start, end, year, cggCd, bldgUsg);
+        return webClient.get()
+            .uri(uri)
+            .retrieve()
+            .bodyToMono(JsonNode.class);
+    }
+
+    private String buildUri(int start, int end, String year, String cggCd, String bldgUsg) {
         UriComponentsBuilder builder = UriComponentsBuilder
             .fromUriString(baseUrl)
-            .pathSegment(apiKey, "json", serviceName, "1", "1000", year, cggCd);
+            .pathSegment(apiKey, "json", serviceName,
+                String.valueOf(start), String.valueOf(end), year, cggCd);
         if (bldgUsg != null && !bldgUsg.isEmpty()) {
             builder.pathSegment(bldgUsg);
         }
@@ -89,6 +121,4 @@ public class RealTradeApiClient {
         }
         return amounts;
     }
-
-
 }
