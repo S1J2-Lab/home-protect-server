@@ -22,7 +22,9 @@
         { "name": "EXTERNAL_MOIS_ADDRESS_KEY", "value": "REPLACE_MOIS" },
         { "name": "EXTERNAL_SEOUL_REAL_TRADE_KEY", "value": "REPLACE_SEOUL_TRADE" },
         { "name": "EXTERNAL_MOLIT_BUILDING_KEY", "value": "REPLACE_MOLIT" },
-        { "name": "EXTERNAL_SEOUL_RENT_KEY", "value": "REPLACE_SEOUL_RENT" }
+        { "name": "EXTERNAL_SEOUL_RENT_KEY", "value": "REPLACE_SEOUL_RENT" },
+        { "name": "CLOVA_OCR_API_URL", "value": "REPLACE_CLOVA_URL" },
+        { "name": "CLOVA_OCR_SECRET_KEY", "value": "REPLACE_CLOVA_KEY" }
       ],
       "logConfiguration": {
         "logDriver": "awslogs",
