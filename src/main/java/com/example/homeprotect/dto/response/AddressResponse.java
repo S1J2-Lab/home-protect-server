@@ -12,4 +12,6 @@ public class AddressResponse {
     private String buildingName;
     private String admCd;
     private String rnMgtSn;
+    private String mno;
+    private String sno;
 }

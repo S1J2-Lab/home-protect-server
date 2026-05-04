@@ -63,7 +63,7 @@ public class AddressService {
     }
 
     private URI buildUri(String keyword) {
-        return UriComponentsBuilder.fromHttpUrl(moisAddressUrl)
+        return UriComponentsBuilder.fromUriString(moisAddressUrl)
             .queryParam("confmKey", moisAddressKey)
             .queryParam("currentPage", 1)
             .queryParam("countPerPage", 10)
@@ -94,6 +94,8 @@ public class AddressService {
                 .buildingName(juso.path("bdNm").asText())
                 .admCd(juso.path("admCd").asText())
                 .rnMgtSn(juso.path("rnMgtSn").asText())
+                .mno(String.format("%04d", juso.path("buldMnnm").asInt()))  // 추가
+                .sno(String.format("%04d", juso.path("buldSlno").asInt()))  // 추가
                 .build());
         }
         return results;

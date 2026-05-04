@@ -26,12 +26,17 @@ public-api:
   external:
     # 1. 서울시: 부동산 실거래가 정보
     seoul-real-trade-url: http://openapi.seoul.go.kr:8088
+    seoul-real-trade-service: tbLnOpendataRtmsV
 
     # 2. 국토교통부: 건축물대장 서비스
     molit-building-url: https://apis.data.go.kr/1613000/BldRgstHubService
 
     # 3. 서울시: 부동산 전월세가 정보
     seoul-rent-url:  http://openapi.seoul.go.kr:8088
+    seoul-rent-service: tbLnOpendataRentV
+    # 전세/월세 구분 필드명·값
+    seoul-rent-type-field: RENT_SE
+    seoul-rent-type-jeonse: 전세
 
     # 4. 행정안전부: 실시간 주소정보 조회
     mois-address-url: https://business.juso.go.kr/addrlink/addrLinkApi.do
