@@ -7,12 +7,10 @@ spring:
     name: home-protect
   profiles:
     default: dev # active -> default
-#  data: #현재 주석들은 추후에 구현하며 진행할 예정
-#    redis:
-#      timeout: 3000ms
-#
+
+
 #gemini:
-#  api: #ocr 요약시 사용
+#  api:
 #    base-url: https://generativelanguage.googleapis.com
 #    model: gemini-2.0-flash
 #    timeout: 20000
