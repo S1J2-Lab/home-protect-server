@@ -24,9 +24,12 @@ public class WebClientConfig {
         HttpClient httpClient = buildHttpClient(CONNECTION_TIMEOUT_MS, RESPONSE_TIMEOUT_MS);
 
         return WebClient.builder()
-                .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                .defaultHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE)
-                .clientConnector(new ReactorClientHttpConnector(httpClient));
+            .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+            .defaultHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE)
+            .clientConnector(new ReactorClientHttpConnector(httpClient))
+            .codecs(configurer -> configurer
+                .defaultCodecs()
+                .maxInMemorySize(10 * 1024 * 1024)); // 10MB로 늘리기
     }
 
     static HttpClient buildHttpClient(int connectTimeoutMs, int responseTimeoutMs) {
@@ -36,4 +39,5 @@ public class WebClientConfig {
                 .doOnConnected(conn -> conn.addHandlerLast(
                         new ReadTimeoutHandler(responseTimeoutMs, TimeUnit.MILLISECONDS)));
     }
+
 }
