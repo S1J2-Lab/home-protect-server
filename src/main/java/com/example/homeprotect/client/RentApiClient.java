@@ -1,0 +1,110 @@
+package com.example.homeprotect.client;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.util.UriComponentsBuilder;
+
+
+import reactor.core.publisher.Mono;
+
+@Component
+public class RentApiClient {
+
+    private static final Logger log = LoggerFactory.getLogger(RentApiClient.class);
+    private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("yyyyMMdd");
+
+    @Value("${public-api.external.seoul-rent-url}")
+    private String baseUrl;
+
+    @Value("${public-api.external.seoul-rent-key}")
+    private String apiKey;
+
+    @Value("${public-api.external.seoul-rent-service}")
+    private String serviceName;
+
+    @Value("${public-api.external.seoul-rent-type-field}")
+    private String rentTypeField;
+
+    @Value("${public-api.external.seoul-rent-type-jeonse}")
+    private String jeonseTypeValue;
+
+    private final WebClient webClient;
+
+    public RentApiClient(WebClient.Builder webClientBuilder) {
+        this.webClient = webClientBuilder.clone().build();
+    }
+
+    public Mono<List<Long>> fetchJeonseAmounts(String cggCd, String stdgCd, String mno, String sno, String bldgUsg) {
+        String cutoffDate = LocalDate.now().minusYears(2).format(DATE_FMT);
+        String thisYear = String.valueOf(LocalDate.now().getYear());
+        String lastYear = String.valueOf(LocalDate.now().getYear() - 1);
+
+        Mono<List<Long>> thisYearData = fetchByYear(thisYear, cggCd, stdgCd, mno, sno, bldgUsg, cutoffDate);
+        Mono<List<Long>> lastYearData = fetchByYear(lastYear, cggCd, stdgCd, mno, sno, bldgUsg, cutoffDate);
+
+        return Mono.zip(thisYearData, lastYearData)
+            .map(tuple -> {
+                List<Long> combined = new ArrayList<>(tuple.getT1());
+                combined.addAll(tuple.getT2());
+                return combined;
+            });
+    }
+
+    private Mono<List<Long>> fetchByYear(String year, String cggCd, String stdgCd,
+        String mno, String sno, String bldgUsg, String cutoffDate) {
+        String uri = buildUri(year, cggCd, bldgUsg);
+        return webClient.get()
+            .uri(uri)
+            .retrieve()
+            .bodyToMono(JsonNode.class)
+            .map(root -> parseJeonseAmounts(root, cutoffDate, cggCd, stdgCd, mno, sno)) // 파라미터 다 넘겨요
+            .onErrorResume(e -> {
+                log.error("서울시 전월세가 API 호출 실패 [{}년]: {}", year, e.getMessage());
+                return Mono.just(new ArrayList<>());
+            });
+    }
+
+    private String buildUri(String year, String cggCd, String bldgUsg) {
+        UriComponentsBuilder builder = UriComponentsBuilder
+            .fromUriString(baseUrl)
+            .pathSegment(apiKey, "json", serviceName, "1", "1000", year, cggCd);
+        if (bldgUsg != null && !bldgUsg.isEmpty()) {
+            builder.pathSegment(bldgUsg);
+        }
+        return builder.build().encode(StandardCharsets.UTF_8).toUriString();
+    }
+
+    private List<Long> parseJeonseAmounts(JsonNode root, String cutoffDate,
+        String cggCd, String stdgCd,
+        String mno, String sno) {
+        List<Long> amounts = new ArrayList<>();
+        JsonNode rows = root.path(serviceName).path("row");
+        for (JsonNode row : rows) {
+            if (!cggCd.equals(row.path("CGG_CD").asText())) continue;
+            // stdgCd 있으면 법정동 필터
+            if (stdgCd != null && !stdgCd.isEmpty()
+                && !stdgCd.equals(row.path("STDG_CD").asText())) continue;
+            // mno 있으면 본번 필터
+            if (mno != null && !mno.isEmpty()
+                && !mno.equals(row.path("MNO").asText())) continue;
+            // sno 있으면 부번 필터
+            if (sno != null && !sno.isEmpty()
+                && !sno.equals(row.path("SNO").asText())) continue;
+            if (!jeonseTypeValue.equals(row.path(rentTypeField).asText())) continue;
+            if (row.path("CTRT_DAY").asText().compareTo(cutoffDate) < 0) continue;
+            double grfe = row.path("GRFE").asDouble();
+            if (grfe > 0) amounts.add((long) (grfe * 10_000));
+        }
+        return amounts;
+    }
+}
