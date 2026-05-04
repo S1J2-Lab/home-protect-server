@@ -63,7 +63,7 @@ public class AddressService {
     }
 
     private URI buildUri(String keyword) {
-        return UriComponentsBuilder.fromHttpUrl(moisAddressUrl)
+        return UriComponentsBuilder.fromUriString(moisAddressUrl)
             .queryParam("confmKey", moisAddressKey)
             .queryParam("currentPage", 1)
             .queryParam("countPerPage", 10)
