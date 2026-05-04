@@ -19,6 +19,13 @@ public class GlobalExceptionHandler {
         ErrorCode.VECTOR_DB_FAILED
     );
 
+    @ExceptionHandler(PiiDetectedException.class)
+    public ResponseEntity<PiiErrorResponse> handlePiiDetectedException(PiiDetectedException e) {
+        log.warn("[{}] {}", e.getErrorCode().name(), e.getErrorCode().getMessage());
+        PiiErrorResponse body = new PiiErrorResponse(e.getErrorCode(), e.getNonMasked());
+        return ResponseEntity.status(e.getErrorCode().getStatus()).body(body);
+    }
+
     @ExceptionHandler(HomeProtectException.class)
     public ResponseEntity<ErrorResponse> handleHomeProtectException(HomeProtectException e) {
         ErrorCode errorCode = e.getErrorCode();

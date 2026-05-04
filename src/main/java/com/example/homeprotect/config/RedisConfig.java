@@ -11,7 +11,9 @@ import org.springframework.data.redis.connection.RedisPassword;
 import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
 import org.springframework.data.redis.connection.lettuce.LettuceClientConfiguration;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
+import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 import java.time.Duration;
@@ -34,7 +36,7 @@ public class RedisConfig {
     private Duration timeout;
 
     @Bean
-    public RedisConnectionFactory redisConnectionFactory() {
+    public LettuceConnectionFactory redisConnectionFactory() {
         RedisStandaloneConfiguration config = new RedisStandaloneConfiguration(host, port);
         if (password != null && !password.isBlank()) {
             config.setPassword(RedisPassword.of(password));
@@ -63,5 +65,16 @@ public class RedisConfig {
         template.setHashKeySerializer(new StringRedisSerializer());
         template.setHashValueSerializer(new StringRedisSerializer());
         return template;
+    }
+
+    // ReactiveRedisTemplate 빈 등록
+    @Bean
+    public ReactiveRedisTemplate<String, String> reactiveRedisTemplate(LettuceConnectionFactory connectionFactory) {
+        StringRedisSerializer serializer = new StringRedisSerializer();
+        RedisSerializationContext<String, String> context = RedisSerializationContext
+                .<String, String>newSerializationContext(serializer)
+                .value(serializer)
+                .build();
+        return new ReactiveRedisTemplate<>(connectionFactory, context);
     }
 }
