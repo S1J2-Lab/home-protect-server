@@ -1,11 +1,10 @@
 # application-prod.yml
 spring:
-#  data: #현재 주석들은 추후에 구현하며 진행할 예정
-#    redis:
-#      host: ${REDIS_HOST}
-#      port: ${REDIS_PORT:6379}
-#      password: ${REDIS_PASSWORD}
-#
+  data:
+    redis:
+      host: 172.17.0.1
+      port: 6379
+
 #gemini:
 #  api:
 #    api-key: ${GEMINI_API_KEY}
@@ -13,6 +12,11 @@ spring:
 #claude:
 #  api:
 #    api-key: ${CLAUDE_API_KEY}
+
+clova:
+  ocr:
+    api-url: ${CLOVA_OCR_API_URL}
+    secret-key: ${CLOVA_OCR_SECRET_KEY}
 
 public-api:
   external:
