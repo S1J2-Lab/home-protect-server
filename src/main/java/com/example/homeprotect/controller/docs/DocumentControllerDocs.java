@@ -48,6 +48,18 @@ public interface DocumentControllerDocs {
                       }
                     }
                     """)))
+
+  @ApiResponse(responseCode = "400", description = "E-2: 지원하지 않는 파일 형식",
+      content = @Content(examples = @ExampleObject(value = """
+                    {
+                      "status": "error",
+                      "error": {
+                        "code": "INVALID_FILE_TYPE",
+                        "message": "지원하지 않는 파일 형식이에요. (jpg, jpeg, png, pdf)",
+                        "field": "file"
+                      }
+                   }
+                  """)))
   @ApiResponse(responseCode = "422", description = "E-2: OCR 판독 실패",
       content = @Content(examples = @ExampleObject(value = """
                     {

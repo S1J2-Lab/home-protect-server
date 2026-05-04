@@ -43,9 +43,8 @@ public class DocumentService {
     }
 
     public Mono<OcrSessionData> scanDocument(FilePart file, String docType) {
-        String contentType = file.headers().getContentType() != null
-            ? file.headers().getContentType().toString() : "";
-        if (!ALLOWED_CONTENT_TYPES.contains(contentType)) {
+        org.springframework.http.MediaType mediaType = file.headers().getContentType();
+        if (mediaType == null || !ALLOWED_CONTENT_TYPES.contains(mediaType.getType() + "/" + mediaType.getSubtype())) {
             return Mono.error(new HomeProtectException(ErrorCode.INVALID_FILE_TYPE));
         }
 

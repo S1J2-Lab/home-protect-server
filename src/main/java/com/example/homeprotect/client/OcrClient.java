@@ -1,5 +1,6 @@
 package com.example.homeprotect.client;
 
+import java.time.Duration;
 import java.util.UUID;
 
 import org.slf4j.Logger;
@@ -65,6 +66,7 @@ public class OcrClient {
                 .body(BodyInserters.fromMultipartData(bodyBuilder.build()))
                 .retrieve()
                 .bodyToMono(JsonNode.class)
+                .timeout(Duration.ofSeconds(30))
                 .map(this::parseOcrText)
                 .onErrorMap(e -> !(e instanceof HomeProtectException), e -> {
                     log.error("CLOVA OCR API 호출 실패: {}", e.getMessage());
