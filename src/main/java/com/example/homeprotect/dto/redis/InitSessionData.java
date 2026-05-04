@@ -1,14 +1,12 @@
 package com.example.homeprotect.dto.redis;
 
-import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.extern.jackson.Jacksonized;
 
 @Getter
 @Builder
-@NoArgsConstructor
-@AllArgsConstructor
+@Jacksonized
 public class InitSessionData {
 
     private String sessionId;
@@ -23,8 +21,7 @@ public class InitSessionData {
 
     @Getter
     @Builder
-    @NoArgsConstructor
-    @AllArgsConstructor
+    @Jacksonized
     public static class ContractPeriod {
         private String startDate;
         private String endDate;
