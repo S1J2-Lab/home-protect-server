@@ -13,7 +13,6 @@ import com.example.homeprotect.exception.ErrorCode;
 import com.example.homeprotect.exception.HomeProtectException;
 import com.fasterxml.jackson.databind.JsonNode;
 
-import org.springframework.web.util.UriComponentsBuilder;
 import reactor.core.publisher.Mono;
 
 @Component
@@ -43,8 +42,11 @@ public class BuildingApiClient {
     public Mono<JsonNode> fetchTitleItem(String sigunguCd, String bjdongCd, String bun, String ji) {
         return callApi(TITLE_INFO_ENDPOINT, sigunguCd, bjdongCd, bun, ji, TITLE_PAGE_SIZE)
             .flatMap(root -> {
-                int totalCount = root.path("response").path("body").path("totalCount").asInt();
-                if (totalCount == 0) {
+              JsonNode totalCountNode = root.path("response").path("body").path("totalCount");
+              if (totalCountNode.isMissingNode()) {
+                  return Mono.error(new HomeProtectException(ErrorCode.API_UNAVAILABLE));
+              }
+              if (totalCountNode.asInt() == 0) {
                     return Mono.error(new HomeProtectException(ErrorCode.BUILDING_INFO_NOT_FOUND));
                 }
                 JsonNode items = root.path("response").path("body").path("items").path("item");

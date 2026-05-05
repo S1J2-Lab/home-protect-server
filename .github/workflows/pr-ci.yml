@@ -38,5 +38,6 @@ jobs:
           EXTERNAL_SEOUL_RENT_KEY: ${{ secrets.EXTERNAL_SEOUL_RENT_KEY }}
           CLOVA_OCR_API_URL: ${{ secrets.CLOVA_OCR_API_URL }}
           CLOVA_OCR_SECRET_KEY: ${{ secrets.CLOVA_OCR_SECRET_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: ./gradlew build --no-daemon
         # 컴파일 + 테스트 (둘 중 하나라도 실패하면 머지 불가)
