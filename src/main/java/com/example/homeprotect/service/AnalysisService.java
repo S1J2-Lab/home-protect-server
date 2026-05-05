@@ -52,7 +52,7 @@ public class AnalysisService {
                 .contractPeriod(request.getContractPeriod())
                 .build();
       return redisUtil.saveInitSession(sessionData)
-          .doOnTerminate(() -> {
+          .doOnSuccess(ignored -> {
             jeonseRatioService.calculateAndSave(sessionData)
                 .onErrorResume(e -> {
                   log.error("전세가율 백그라운드 계산 실패 [{}]: {}", sessionData.getSessionId(), e.getMessage());
