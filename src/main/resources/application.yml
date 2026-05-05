@@ -21,6 +21,10 @@ claude:
     max-tokens: 4000
     timeout: 30000
 
+pinecone:
+  api:
+    timeout: 10000
+
 public-api:
   external:
     # 1. 서울시: 부동산 실거래가 정보
