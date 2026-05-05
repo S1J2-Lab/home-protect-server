@@ -12,8 +12,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.util.UriComponentsBuilder;
 
+import org.springframework.web.util.UriUtils;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -110,14 +110,15 @@ public class RentApiClient {
     }
 
     private String buildUri(int start, int end, String year, String cggCd, String bldgUsg) {
-        UriComponentsBuilder builder = UriComponentsBuilder
-            .fromUriString(baseUrl)
-            .pathSegment(apiKey, "json", serviceName,
-                String.valueOf(start), String.valueOf(end), year, cggCd);
-        if (bldgUsg != null && !bldgUsg.isEmpty()) {
-            builder.pathSegment(bldgUsg);
-        }
-        return builder.build().encode(StandardCharsets.UTF_8).toUriString();
+      StringBuilder path = new StringBuilder("/")
+          .append(apiKey).append("/json/").append(serviceName).append("/")
+          .append(start).append("/").append(end).append("/")
+          .append(year).append("/").append(cggCd);
+      if (bldgUsg != null && !bldgUsg.isEmpty()) {
+        path.append("/").append(UriUtils.encodePath(bldgUsg, StandardCharsets.UTF_8));
+      }
+      String base = baseUrl.endsWith("/") ? baseUrl.substring(0, baseUrl.length() - 1) : baseUrl;
+      return base + path;
     }
 
     private List<Long> parseJeonseAmounts(JsonNode root, String cutoffDate,

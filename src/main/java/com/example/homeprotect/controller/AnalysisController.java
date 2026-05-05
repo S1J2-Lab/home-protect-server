@@ -3,7 +3,9 @@ package com.example.homeprotect.controller;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+
 import org.springframework.http.ResponseEntity;
+
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -22,7 +24,7 @@ public class AnalysisController {
     private final AnalysisService analysisService;
 
     public AnalysisController(AnalysisService analysisService) {
-        this.analysisService = analysisService;
+      this.analysisService = analysisService;
     }
 
     @PostMapping("/init")
@@ -41,4 +43,5 @@ public class AnalysisController {
                     return ResponseEntity.ok(response);
                 });
     }
+
 }

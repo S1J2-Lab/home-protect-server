@@ -15,6 +15,7 @@ public class AnalysisInitRequest {
 
     private String address;
     private String admCd;
+    private String bdMgtSn;
     private String rnMgtSn;
     private String mno;
     private String sno;

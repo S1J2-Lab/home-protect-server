@@ -24,10 +24,13 @@ public class AnalysisService {
 
     private final RedisUtil redisUtil;
     private final JeonseRatioService jeonseRatioService;
+    private final BuildingService buildingService;
 
-    public AnalysisService(RedisUtil redisUtil, JeonseRatioService jeonseRatioService) {
+    public AnalysisService(RedisUtil redisUtil, JeonseRatioService jeonseRatioService,
+                           BuildingService buildingService) {
         this.redisUtil = redisUtil;
         this.jeonseRatioService = jeonseRatioService;
+        this.buildingService = buildingService;
     }
 
     public Mono<String> initAnalysis(AnalysisInitRequest request, String ocrSessionId) {
@@ -39,6 +42,7 @@ public class AnalysisService {
                 .ocrSessionId(ocrSessionId)
                 .address(request.getAddress())
                 .admCd(request.getAdmCd())
+                .bdMgtSn(request.getBdMgtSn())
                 .rnMgtSn(request.getRnMgtSn())
                 .mno(request.getMno())
                 .sno(request.getSno())
@@ -47,17 +51,24 @@ public class AnalysisService {
                 .contractType(request.getContractType())
                 .contractPeriod(request.getContractPeriod())
                 .build();
-        return redisUtil.saveInitSession(sessionData)
-                .doOnSuccess(v ->
-                        jeonseRatioService.calculateAndSave(sessionData)
-                                .onErrorResume(e -> {
-                                    log.error("전세가율 백그라운드 계산 실패 [{}]: {}",
-                                            sessionData.getSessionId(), e.getMessage());
-                                    return Mono.empty();
-                                })
-                                .subscribeOn(Schedulers.boundedElastic())
-                                .subscribe()
-                )
-                .thenReturn(sessionData.getSessionId());
+      return redisUtil.saveInitSession(sessionData)
+          .doOnSuccess(ignored -> {
+            jeonseRatioService.calculateAndSave(sessionData)
+                .onErrorResume(e -> {
+                  log.error("전세가율 백그라운드 계산 실패 [{}]: {}", sessionData.getSessionId(), e.getMessage());
+                  return Mono.empty();
+                })
+                .subscribeOn(Schedulers.boundedElastic())
+                .subscribe();
+
+            buildingService.calculateAndSave(sessionData)
+                .onErrorResume(e -> {
+                  log.error("건축물 정보 백그라운드 조회 실패 [{}]: {}", sessionData.getSessionId(), e.getMessage());
+                  return Mono.empty();
+                })
+                .subscribeOn(Schedulers.boundedElastic())
+                .subscribe();
+          })
+          .thenReturn(sessionData.getSessionId());
     }
 }

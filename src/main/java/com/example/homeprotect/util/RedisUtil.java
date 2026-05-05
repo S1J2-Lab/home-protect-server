@@ -7,6 +7,7 @@ import org.springframework.stereotype.Component;
 
 import com.example.homeprotect.dto.redis.InitSessionData;
 import com.example.homeprotect.dto.redis.OcrSessionData;
+import com.example.homeprotect.dto.response.BuildingResponse;
 import com.example.homeprotect.dto.response.JeonseRatioResponse;
 import com.example.homeprotect.exception.ErrorCode;
 import com.example.homeprotect.exception.HomeProtectException;
@@ -21,6 +22,7 @@ public class RedisUtil {
     private static final String OCR_KEY_PREFIX = "ocr:";
     private static final String INIT_KEY_PREFIX = "init:";
     private static final String JEONSE_RATIO_KEY_PREFIX = "jeonseRatio:";
+    private static final String BUILDING_KEY_PREFIX = "building:";
     private static final Duration OCR_TTL = Duration.ofMinutes(30);
 
     private final ReactiveRedisTemplate<String, String> reactiveRedisTemplate;
@@ -57,6 +59,20 @@ public class RedisUtil {
         return serialize(response)
                 .flatMap(json -> reactiveRedisTemplate.opsForValue().set(key, json, OCR_TTL))
                 .then();
+    }
+
+    public Mono<Void> saveBuildingInfo(String sessionId, BuildingResponse response) {
+        String key = BUILDING_KEY_PREFIX + sessionId;
+        return serialize(response)
+                .flatMap(json -> reactiveRedisTemplate.opsForValue().set(key, json, OCR_TTL))
+                .then();
+    }
+
+    public Mono<BuildingResponse> getBuildingInfo(String sessionId) {
+        String key = BUILDING_KEY_PREFIX + sessionId;
+        return reactiveRedisTemplate.opsForValue().get(key)
+                .switchIfEmpty(Mono.error(new HomeProtectException(ErrorCode.SESSION_EXPIRED)))
+                .flatMap(json -> deserialize(json, BuildingResponse.class));
     }
 
     public Mono<JeonseRatioResponse> getJeonseRatio(String sessionId) {
