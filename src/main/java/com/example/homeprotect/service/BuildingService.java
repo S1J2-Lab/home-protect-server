@@ -1,5 +1,6 @@
 package com.example.homeprotect.service;
 
+import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.stereotype.Service;
@@ -33,7 +34,7 @@ public class BuildingService {
 
     public Mono<Void> calculateAndSave(InitSessionData sessionData) {
         String bdMgtSn = sessionData.getBdMgtSn();
-        if (bdMgtSn == null || bdMgtSn.length() < 10) {
+        if (bdMgtSn == null || bdMgtSn.length() < 19) {
             return Mono.error(new HomeProtectException(ErrorCode.INVALID_ADDRESS));
         }
         String sigunguCd = bdMgtSn.substring(0, 5);
@@ -44,20 +45,24 @@ public class BuildingService {
         return Mono.zip(
             buildingApiClient.fetchTitleItem(sigunguCd, bjdongCd, bun, ji),
             buildingApiClient.fetchIsRedevelopmentZone(sigunguCd, bjdongCd, bun, ji)
+                .map(Optional::of)
+                .onErrorResume(e -> Mono.just(Optional.empty()))
         ).flatMap(tuple -> {
-            BuildingResponse response = buildResponse(tuple.getT1(), tuple.getT2());
+            BuildingResponse response = buildResponse(tuple.getT1(), tuple.getT2().orElse(null));
             return redisUtil.saveBuildingInfo(sessionData.getSessionId(), response);
         });
     }
 
-    private BuildingResponse buildResponse(JsonNode titleItem, boolean isRedevelopmentZone) {
+    private BuildingResponse buildResponse(JsonNode titleItem, Boolean isRedevelopmentZone) {
         String primaryUse = titleItem.path("mainPurpsCdNm").asText("");
         String useAprDay = titleItem.path("useAprDay").asText("");
 
         return BuildingResponse.builder()
             .level(resolveLevel(primaryUse))
             .primaryUse(primaryUse.isEmpty() ? null : primaryUse)
-            .isResidential(SAFE_USES.contains(primaryUse))
+            .isResidential(SAFE_USES.stream().anyMatch(primaryUse::contains))
+//        표제부 API 응답에 위반건축물 필드(violViolBldCd/violViolBldYmd)가 포함되지 않아
+//       현재는 false로 고정합니다. 다른 데이터 소스를 통해 파싱이 가능해지면 구현 필요.
             .violation(false)
             .approvedDate(formatApprovedDate(useAprDay))
             .redevelopmentZone(isRedevelopmentZone)
@@ -65,8 +70,8 @@ public class BuildingService {
     }
 
     private String resolveLevel(String primaryUse) {
-        if (SAFE_USES.contains(primaryUse)) return "safe";
-        if (DANGER_USES.contains(primaryUse)) return "danger";
+        if (SAFE_USES.stream().anyMatch(primaryUse::contains)) return "safe";
+        if (DANGER_USES.stream().anyMatch(primaryUse::contains)) return "danger";
         return "caution";
     }
 
