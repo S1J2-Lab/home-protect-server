@@ -13,6 +13,7 @@ import com.example.homeprotect.exception.ErrorCode;
 import com.example.homeprotect.exception.HomeProtectException;
 import com.fasterxml.jackson.databind.JsonNode;
 
+import org.springframework.web.util.UriComponentsBuilder;
 import reactor.core.publisher.Mono;
 
 @Component
@@ -75,28 +76,28 @@ public class BuildingApiClient {
                 }
                 return hasRedevelopmentKeyword(items.path("jijiguCdNm").asText());
             })
-            .onErrorResume(e -> {
+            .onErrorMap(e -> {
                 log.error("건축물대장 지역지구구역 API 호출 실패: {}", e.getMessage());
-                return Mono.just(false);
+                return new HomeProtectException(ErrorCode.API_UNAVAILABLE, e);
             });
     }
 
     private Mono<JsonNode> callApi(String endpoint, String sigunguCd, String bjdongCd,
         String bun, String ji, int numOfRows) {
-        String uri = baseUrl + "/" + endpoint
-            + "?serviceKey=" + serviceKey
-            + "&sigunguCd=" + sigunguCd
-            + "&bjdongCd=" + bjdongCd
-            + "&bun=" + bun
-            + "&ji=" + ji
-            + "&_type=json"
-            + "&numOfRows=" + numOfRows
-            + "&pageNo=1";
+      String uri = baseUrl + "/" + endpoint
+          + "?serviceKey=" + serviceKey
+          + "&sigunguCd=" + sigunguCd
+          + "&bjdongCd=" + bjdongCd
+          + "&bun=" + bun
+          + "&ji=" + ji
+          + "&_type=json"
+          + "&numOfRows=" + numOfRows
+          + "&pageNo=1";
 
-        return webClient.get()
-            .uri(URI.create(uri))
-            .retrieve()
-            .bodyToMono(JsonNode.class);
+      return webClient.get()
+          .uri(URI.create(uri))
+          .retrieve()
+          .bodyToMono(JsonNode.class);
     }
 
     private boolean hasRedevelopmentKeyword(String value) {
