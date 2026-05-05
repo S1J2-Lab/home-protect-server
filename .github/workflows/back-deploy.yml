@@ -51,6 +51,7 @@ jobs:
           CLOVA_URL: ${{ secrets.CLOVA_OCR_API_URL }}
           CLOVA_KEY: ${{ secrets.CLOVA_OCR_SECRET_KEY }}
           GEMINI_KEY: ${{ secrets.GEMINI_API_KEY }}
+          CLAUDE_KEY: ${{ secrets.CLAUDE_API_KEY }}
         run: |
           set -euo pipefail
           : "${MOIS_KEY:?EXTERNAL_MOIS_ADDRESS_KEY secret is missing}"
@@ -60,6 +61,7 @@ jobs:
           : "${CLOVA_URL:?CLOVA_OCR_API_URL secret is missing}"
           : "${CLOVA_KEY:?CLOVA_OCR_SECRET_KEY secret is missing}"
           : "${GEMINI_KEY:?GEMINI_API_KEY secret is missing}"
+          : "${CLAUDE_KEY:?CLAUDE_API_KEY secret is missing}"
           
           jq --arg mois "$MOIS_KEY" \
              --arg trade "$SEOUL_TRADE_KEY" \
@@ -68,13 +70,15 @@ jobs:
              --arg clova_url "$CLOVA_URL" \
              --arg clova_key "$CLOVA_KEY" \
              --arg gemini "$GEMINI_KEY" \
+             --arg claude "$CLAUDE_KEY" \
              '(.containerDefinitions[0].environment[] | select(.name == "EXTERNAL_MOIS_ADDRESS_KEY")).value = $mois |
               (.containerDefinitions[0].environment[] | select(.name == "EXTERNAL_SEOUL_REAL_TRADE_KEY")).value = $trade |
               (.containerDefinitions[0].environment[] | select(.name == "EXTERNAL_MOLIT_BUILDING_KEY")).value = $molit |
               (.containerDefinitions[0].environment[] | select(.name == "EXTERNAL_SEOUL_RENT_KEY")).value = $rent |
               (.containerDefinitions[0].environment[] | select(.name == "CLOVA_OCR_API_URL")).value = $clova_url |
               (.containerDefinitions[0].environment[] | select(.name == "CLOVA_OCR_SECRET_KEY")).value = $clova_key |
-              (.containerDefinitions[0].environment[] | select(.name == "GEMINI_API_KEY")).value = $gemini' \
+              (.containerDefinitions[0].environment[] | select(.name == "GEMINI_API_KEY")).value = $gemini |
+              (.containerDefinitions[0].environment[] | select(.name == "CLAUDE_API_KEY")).value = $claude' \
              ecs/task-definition.json > tmp.json && mv tmp.json ecs/task-definition.json
 
       - name: Fill in the new image ID in the ECS task definition
