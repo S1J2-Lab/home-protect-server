@@ -81,8 +81,7 @@ public class ContractService {
         try {
             return objectMapper.readValue(json, ContractClauseResult.class);
         } catch (Exception e) {
-            log.error("Claude 응답 JSON 파싱 실패 (앞 100자): {}",
-                json.length() > 100 ? json.substring(0, 100) + "..." : json);
+            log.error("Claude 응답 JSON 파싱 실패");
             throw new HomeProtectException(ErrorCode.AI_PARSE_FAILED, e);
         }
     }
