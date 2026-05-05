@@ -23,12 +23,12 @@ public class RegistryAnalysisResult {
     @AllArgsConstructor
     @Jacksonized
     public static class RegistryInfo {
-        private int mortgageCount;
+        private Integer mortgageCount;
         private List<Mortgage> mortgages;
-        private long totalMortgage;
-        private boolean trustWarning;
-        private boolean priorLease;
-        private boolean ownershipChangeRecent;
+        private Long totalMortgage;
+        private Boolean trustWarning;
+        private Boolean priorLease;
+        private Boolean ownershipChangeRecent;
     }
 
     @Getter
@@ -38,6 +38,6 @@ public class RegistryAnalysisResult {
     @Jacksonized
     public static class Mortgage {
         private String bank;
-        private long amount;
+        private Long amount;
     }
 }

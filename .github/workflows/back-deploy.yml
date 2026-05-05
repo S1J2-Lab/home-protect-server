@@ -52,6 +52,15 @@ jobs:
           CLOVA_KEY: ${{ secrets.CLOVA_OCR_SECRET_KEY }}
           GEMINI_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
+          set -euo pipefail
+          : "${MOIS_KEY:?EXTERNAL_MOIS_ADDRESS_KEY secret is missing}"
+          : "${SEOUL_TRADE_KEY:?EXTERNAL_SEOUL_REAL_TRADE_KEY secret is missing}"
+          : "${MOLIT_KEY:?EXTERNAL_MOLIT_BUILDING_KEY secret is missing}"
+          : "${SEOUL_RENT_KEY:?EXTERNAL_SEOUL_RENT_KEY secret is missing}"
+          : "${CLOVA_URL:?CLOVA_OCR_API_URL secret is missing}"
+          : "${CLOVA_KEY:?CLOVA_OCR_SECRET_KEY secret is missing}"
+          : "${GEMINI_KEY:?GEMINI_API_KEY secret is missing}"
+          
           jq --arg mois "$MOIS_KEY" \
              --arg trade "$SEOUL_TRADE_KEY" \
              --arg molit "$MOLIT_KEY" \

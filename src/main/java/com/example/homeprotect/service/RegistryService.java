@@ -1,5 +1,7 @@
 package com.example.homeprotect.service;
 
+import java.time.LocalDate;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -30,7 +32,7 @@ public class RegistryService {
             3. totalMortgage: mortgages의 amount 합산
             4. trustWarning: "신탁" 키워드가 등기 목적 또는 원인에 포함되면 true
             5. priorLease: "선순위" 또는 "선순위임차인" 키워드가 포함되면 true
-            6. ownershipChangeRecent: 소유권 이전 등기가 최근 2년 이내(현재 기준)에 발생했으면 true
+            6. ownershipChangeRecent: 소유권 이전 등기가 {{TODAY}} 기준 최근 2년 이내에 발생했으면 true
 
             [출력 형식]
             {
@@ -61,7 +63,14 @@ public class RegistryService {
     public Mono<RegistryAnalysisResult> analyze(String documentId) {
         return redisUtil.getOcrSession(documentId)
             .flatMap(session -> {
-                String prompt = REGISTRY_PROMPT_TEMPLATE.replace("{{RAW_TEXT}}", session.getRawText());
+                String rawText = session.getRawText();
+                if (rawText == null || rawText.isBlank()) {
+                    return Mono.error(new HomeProtectException(ErrorCode.OCR_FAILED));
+                }
+                String today = LocalDate.now().toString();
+                String prompt = REGISTRY_PROMPT_TEMPLATE
+                    .replace("{{TODAY}}", today)
+                    .replace("{{RAW_TEXT}}", rawText);
                 return geminiClient.generate(prompt);
             })
             .map(this::parseResult);
@@ -72,7 +81,7 @@ public class RegistryService {
         try {
             return objectMapper.readValue(json, RegistryAnalysisResult.class);
         } catch (Exception e) {
-            log.error("Gemini 응답 JSON 파싱 실패: {}", json);
+            log.error("Gemini 응답 JSON 파싱 실패 (앞 100자): {}", json.length() > 100 ? json.substring(0, 100) + "..." : json);
             throw new HomeProtectException(ErrorCode.AI_PARSE_FAILED, e);
         }
     }

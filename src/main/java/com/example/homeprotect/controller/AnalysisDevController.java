@@ -1,5 +1,7 @@
 package com.example.homeprotect.controller;
 
+import jakarta.validation.Valid;
+
 import com.example.homeprotect.dto.request.RegistryAnalysisRequestDto;
 import com.example.homeprotect.service.RegistryService;
 import com.example.homeprotect.util.RedisUtil;
@@ -49,7 +51,7 @@ public class AnalysisDevController {
 
   @PostMapping("/registry/analyze")
   public Mono<ResponseEntity<Object>> analyzeRegistry(
-      @RequestBody RegistryAnalysisRequestDto request) {
+      @Valid @RequestBody RegistryAnalysisRequestDto request) {
     return registryService.analyze(request.getDocumentId())
         .map(result -> ResponseEntity.ok((Object) result));
   }

@@ -40,9 +40,17 @@ public class GeminiClient {
             .bodyValue(body)
             .retrieve()
             .bodyToMono(JsonNode.class)
-            .map(root -> root.path("candidates").get(0)
-                .path("content").path("parts").get(0)
-                .path("text").asText())
+            .map(root -> {
+                JsonNode candidate = root.path("candidates").get(0);
+                if (candidate == null) {
+                    throw new HomeProtectException(ErrorCode.GEMINI_CALL_FAILED);
+                }
+                JsonNode part = candidate.path("content").path("parts").get(0);
+                if (part == null) {
+                    throw new HomeProtectException(ErrorCode.GEMINI_CALL_FAILED);
+                }
+                return part.path("text").asText();
+            })
             .onErrorMap(
                 e -> !(e instanceof HomeProtectException),
                 e -> {
