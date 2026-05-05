@@ -8,10 +8,10 @@ spring:
 gemini:
   api:
     api-key: ${GEMINI_API_KEY}
-#
-#claude:
-#  api:
-#    api-key: ${CLAUDE_API_KEY}
+
+claude:
+  api:
+    api-key: ${CLAUDE_API_KEY}
 
 clova:
   ocr:
