@@ -1,10 +1,12 @@
 package com.example.homeprotect.controller;
 
+import com.example.homeprotect.filter.RiskClauseAnalyzer;
 import jakarta.validation.Valid;
 
 import com.example.homeprotect.dto.request.ContractAnalysisRequestDto;
 import com.example.homeprotect.dto.request.RegistryAnalysisRequestDto;
 import com.example.homeprotect.service.ContractService;
+import com.example.homeprotect.service.PrecedentService;
 import com.example.homeprotect.service.RegistryService;
 import com.example.homeprotect.util.RedisUtil;
 import org.springframework.context.annotation.Profile;
@@ -25,11 +27,17 @@ public class AnalysisDevController {
   private final RedisUtil redisUtil;
   private final RegistryService registryService;
   private final ContractService contractService;
+  private final PrecedentService precedentService;
+  private final RiskClauseAnalyzer riskClauseAnalyzer;
 
-  public AnalysisDevController(RedisUtil redisUtil, RegistryService registryService, ContractService contractService) {
+  public AnalysisDevController(RedisUtil redisUtil, RegistryService registryService,
+      ContractService contractService, PrecedentService precedentService,
+      RiskClauseAnalyzer riskClauseAnalyzer) {
     this.redisUtil = redisUtil;
     this.registryService = registryService;
     this.contractService = contractService;
+    this.precedentService = precedentService;
+    this.riskClauseAnalyzer = riskClauseAnalyzer;
   }
 
   @GetMapping("/{sessionId}/jeonse")
@@ -64,6 +72,21 @@ public class AnalysisDevController {
   public Mono<ResponseEntity<Object>> extractContractClauses(
       @Valid @RequestBody ContractAnalysisRequestDto request) {
     return contractService.analyze(request.getDocumentId())
+        .map(result -> ResponseEntity.ok((Object) result));
+  }
+
+  @PostMapping("/contract/precedents")
+  public Mono<ResponseEntity<Object>> searchPrecedents(
+      @Valid @RequestBody ContractAnalysisRequestDto request) {
+    return precedentService.search(request.getDocumentId())
+        .map(result -> ResponseEntity.ok((Object) result));
+  }
+
+  @PostMapping("/contract/risk-clauses")
+  public Mono<ResponseEntity<Object>> extractRiskClauses(
+      @Valid @RequestBody ContractAnalysisRequestDto request) {
+    return redisUtil.getClauseResult(request.getDocumentId())
+        .flatMap(clauseResult -> riskClauseAnalyzer.analyze(clauseResult.getClauses()))
         .map(result -> ResponseEntity.ok((Object) result));
   }
 }
