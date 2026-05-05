@@ -24,12 +24,14 @@ public enum ErrorCode {
     // 세션 관련
     SESSION_EXPIRED(404, "분석 결과가 만료되었어요. (30분 초과) 처음부터 다시 분석해주세요."),
     SESSION_NOT_FOUND(404, "세션 정보를 찾을 수 없어요. 처음부터 다시 시도해주세요."),
+    CLAUSE_NOT_ANALYZED(400, "조항 분석을 먼저 완료해주세요."),
 
     // AI 클라이언트
     CLAUDE_CALL_FAILED(502, "Claude API 호출에 실패했습니다."),
     GEMINI_CALL_FAILED(502, "Gemini API 호출에 실패했습니다."),
 
     // 인프라
+    EMBEDDING_FAILED(502, "임베딩 변환에 실패했습니다."),
     VECTOR_DB_FAILED(500, "판례 검색에 실패했습니다."),
 
     // 공통
