@@ -2,7 +2,9 @@ package com.example.homeprotect.controller;
 
 import jakarta.validation.Valid;
 
+import com.example.homeprotect.dto.request.ContractAnalysisRequestDto;
 import com.example.homeprotect.dto.request.RegistryAnalysisRequestDto;
+import com.example.homeprotect.service.ContractService;
 import com.example.homeprotect.service.RegistryService;
 import com.example.homeprotect.util.RedisUtil;
 import org.springframework.context.annotation.Profile;
@@ -22,10 +24,12 @@ public class AnalysisDevController {
 
   private final RedisUtil redisUtil;
   private final RegistryService registryService;
+  private final ContractService contractService;
 
-  public AnalysisDevController(RedisUtil redisUtil, RegistryService registryService) {
+  public AnalysisDevController(RedisUtil redisUtil, RegistryService registryService, ContractService contractService) {
     this.redisUtil = redisUtil;
     this.registryService = registryService;
+    this.contractService = contractService;
   }
 
   @GetMapping("/{sessionId}/jeonse")
@@ -53,6 +57,13 @@ public class AnalysisDevController {
   public Mono<ResponseEntity<Object>> analyzeRegistry(
       @Valid @RequestBody RegistryAnalysisRequestDto request) {
     return registryService.analyze(request.getDocumentId())
+        .map(result -> ResponseEntity.ok((Object) result));
+  }
+
+  @PostMapping("/contract/clauses")
+  public Mono<ResponseEntity<Object>> extractContractClauses(
+      @Valid @RequestBody ContractAnalysisRequestDto request) {
+    return contractService.analyze(request.getDocumentId())
         .map(result -> ResponseEntity.ok((Object) result));
   }
 }
