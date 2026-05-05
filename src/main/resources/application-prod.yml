@@ -5,9 +5,9 @@ spring:
       host: 172.17.0.1
       port: 6379
 
-#gemini:
-#  api:
-#    api-key: ${GEMINI_API_KEY}
+gemini:
+  api:
+    api-key: ${GEMINI_API_KEY}
 #
 #claude:
 #  api:

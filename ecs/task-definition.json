@@ -24,7 +24,8 @@
         { "name": "EXTERNAL_MOLIT_BUILDING_KEY", "value": "REPLACE_MOLIT" },
         { "name": "EXTERNAL_SEOUL_RENT_KEY", "value": "REPLACE_SEOUL_RENT" },
         { "name": "CLOVA_OCR_API_URL", "value": "REPLACE_CLOVA_URL" },
-        { "name": "CLOVA_OCR_SECRET_KEY", "value": "REPLACE_CLOVA_KEY" }
+        { "name": "CLOVA_OCR_SECRET_KEY", "value": "REPLACE_CLOVA_KEY" },
+        { "name": "GEMINI_API_KEY", "value": "REPLACE_GEMINI" }
       ],
       "logConfiguration": {
         "logDriver": "awslogs",

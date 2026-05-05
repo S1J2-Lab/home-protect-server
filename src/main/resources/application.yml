@@ -9,11 +9,11 @@ spring:
     default: dev # active -> default
 
 
-#gemini:
-#  api:
-#    base-url: https://generativelanguage.googleapis.com
-#    model: gemini-2.0-flash
-#    timeout: 20000
+gemini:
+  api:
+    base-url: https://generativelanguage.googleapis.com
+    model: gemini-2.5-flash-lite
+    timeout: 20000
 #
 #claude:
 #  api: #독소조항 판례DB 비교 출력시 사용
