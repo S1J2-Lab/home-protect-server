@@ -1,6 +1,7 @@
 package com.example.homeprotect.client;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -12,6 +13,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import org.springframework.web.util.UriUtils;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -113,9 +115,10 @@ public class RentApiClient {
           .append(start).append("/").append(end).append("/")
           .append(year).append("/").append(cggCd);
       if (bldgUsg != null && !bldgUsg.isEmpty()) {
-        path.append("/").append(bldgUsg);
+        path.append("/").append(UriUtils.encodePath(bldgUsg, StandardCharsets.UTF_8));
       }
-      return baseUrl + path;
+      String base = baseUrl.endsWith("/") ? baseUrl.substring(0, baseUrl.length() - 1) : baseUrl;
+      return base + path;
     }
 
     private List<Long> parseJeonseAmounts(JsonNode root, String cutoffDate,
