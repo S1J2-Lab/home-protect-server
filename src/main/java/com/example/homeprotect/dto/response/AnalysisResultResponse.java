@@ -11,11 +11,12 @@ import lombok.extern.jackson.Jacksonized;
 @NoArgsConstructor
 @AllArgsConstructor
 @Jacksonized
-public class AnalysisResult {
+public class AnalysisResultResponse {
 
-    private String analyzedAt;
-    private JeonseRatioResponse jeonseRatio;
-    private RegistryAnalysisResult registryParse;
-    private ContractAnalysisResult contractReview;
-    private BuildingResponse buildingCheck;
+  private String address;
+  private String analyzedAt;
+  private JeonseRatioResponse jeonseRatio;
+  private RegistryAnalysisResult.RegistryInfo registry;
+  private BuildingResponse building;
+  private ContractAnalysisResult contract;
 }
