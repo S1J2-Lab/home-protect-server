@@ -1,6 +1,9 @@
 package com.example.homeprotect.service;
 
 import java.time.Duration;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -16,6 +19,7 @@ import com.example.homeprotect.dto.redis.InitSessionData;
 import com.example.homeprotect.dto.request.AnalysisInitRequest;
 import com.example.homeprotect.dto.request.AnalysisRunRequest;
 import com.example.homeprotect.dto.response.AnalysisResult;
+import com.example.homeprotect.dto.response.AnalysisResultResponse;
 import com.example.homeprotect.dto.response.BuildingResponse;
 import com.example.homeprotect.dto.response.ContractAnalysisResult;
 import com.example.homeprotect.dto.response.JeonseRatioResponse;
@@ -37,6 +41,8 @@ public class AnalysisService {
     private static final int ANALYSIS_TIMEOUT_SECONDS = 30;
     private static final long POLL_INTERVAL_MS = 500;
     private static final String COMPLETE_EVENT_DATA = "{\"step\":\"complete\"}";
+    private static final DateTimeFormatter ANALYZED_AT_FORMATTER =
+        DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssxxx");
 
     private final RedisUtil redisUtil;
     private final JeonseRatioService jeonseRatioService;
@@ -45,8 +51,8 @@ public class AnalysisService {
     private final ContractAnalysisService contractAnalysisService;
 
     public AnalysisService(RedisUtil redisUtil, JeonseRatioService jeonseRatioService,
-                           BuildingService buildingService, RegistryService registryService,
-                           ContractAnalysisService contractAnalysisService) {
+        BuildingService buildingService, RegistryService registryService,
+        ContractAnalysisService contractAnalysisService) {
         this.redisUtil = redisUtil;
         this.jeonseRatioService = jeonseRatioService;
         this.buildingService = buildingService;
@@ -59,18 +65,18 @@ public class AnalysisService {
             return Mono.error(new HomeProtectException(ErrorCode.INVALID_CONTRACT_TYPE));
         }
         InitSessionData sessionData = InitSessionData.builder()
-                .sessionId(java.util.UUID.randomUUID().toString())
-                .address(request.getAddress())
-                .admCd(request.getAdmCd())
-                .bdMgtSn(request.getBdMgtSn())
-                .rnMgtSn(request.getRnMgtSn())
-                .mno(request.getMno())
-                .sno(request.getSno())
-                .deposit(request.getDeposit())
-                .monthlyRent(request.getMonthlyRent())
-                .contractType(request.getContractType())
-                .contractPeriod(request.getContractPeriod())
-                .build();
+            .sessionId(java.util.UUID.randomUUID().toString())
+            .address(request.getAddress())
+            .admCd(request.getAdmCd())
+            .bdMgtSn(request.getBdMgtSn())
+            .rnMgtSn(request.getRnMgtSn())
+            .mno(request.getMno())
+            .sno(request.getSno())
+            .deposit(request.getDeposit())
+            .monthlyRent(request.getMonthlyRent())
+            .contractType(request.getContractType())
+            .contractPeriod(request.getContractPeriod())
+            .build();
         return redisUtil.saveInitSession(sessionData)
             .doOnSuccess(ignored -> {
                 jeonseRatioService.calculateAndSave(sessionData)
@@ -107,6 +113,24 @@ public class AnalysisService {
         return Mono.just(request.getSessionId());
     }
 
+    public Mono<AnalysisResultResponse> getAnalysisResult(String sessionId) {
+        return Mono.zip(
+            redisUtil.getInitSession(sessionId),
+            redisUtil.getAnalysisResult(sessionId)
+        ).map(tuple -> {
+            InitSessionData initSession = tuple.getT1();
+            AnalysisResult result = tuple.getT2();
+            return AnalysisResultResponse.builder()
+                .address(initSession.getAddress())
+                .analyzedAt(result.getAnalyzedAt())
+                .jeonseRatio(result.getJeonseRatio())
+                .registry(result.getRegistryParse() != null ? result.getRegistryParse().getRegistry() : null)
+                .building(result.getBuildingCheck())
+                .contract(result.getContractReview())
+                .build();
+        });
+    }
+
     private Mono<Void> executeAnalyses(AnalysisRunRequest request, InitSessionData sessionData) {
         String sessionId = request.getSessionId();
         CompletableFuture<JeonseRatioResponse> jeonseFuture = runStep(
@@ -127,14 +151,17 @@ public class AnalysisService {
     }
 
     private Mono<Void> awaitAndSaveResult(String sessionId,
-            CompletableFuture<JeonseRatioResponse> jeonseFuture,
-            CompletableFuture<RegistryAnalysisResult> registryFuture,
-            CompletableFuture<ContractAnalysisResult> contractFuture,
-            CompletableFuture<BuildingResponse> buildingFuture) {
+        CompletableFuture<JeonseRatioResponse> jeonseFuture,
+        CompletableFuture<RegistryAnalysisResult> registryFuture,
+        CompletableFuture<ContractAnalysisResult> contractFuture,
+        CompletableFuture<BuildingResponse> buildingFuture) {
         return Mono.fromFuture(CompletableFuture
             .allOf(jeonseFuture, registryFuture, contractFuture, buildingFuture)
             .thenCompose(ignored -> {
+                String analyzedAt = ZonedDateTime.now(ZoneId.of("Asia/Seoul"))
+                    .format(ANALYZED_AT_FORMATTER);
                 AnalysisResult result = AnalysisResult.builder()
+                    .analyzedAt(analyzedAt)
                     .jeonseRatio(jeonseFuture.getNow(null))
                     .registryParse(registryFuture.getNow(null))
                     .contractReview(contractFuture.getNow(null))
@@ -161,7 +188,6 @@ public class AnalysisService {
         return Flux.interval(Duration.ZERO, Duration.ofMillis(POLL_INTERVAL_MS))
             .concatMap(tick -> collectNewEvents(sessionId, emitted))
             .takeUntil(sse -> ANALYSIS_STEPS.stream().allMatch(emitted::containsKey));
-
     }
 
     private Flux<ServerSentEvent<String>> collectNewEvents(String sessionId, Map<String, String> emitted) {
@@ -176,7 +202,7 @@ public class AnalysisService {
                         : toSse("{\"step\":\"" + step + "\",\"status\":\"done\"}"))
             )
             .concatWith(Mono.defer(() -> {
-                boolean allDone = ANALYSIS_STEPS.stream().allMatch(s -> emitted.containsKey(s));
+                boolean allDone = ANALYSIS_STEPS.stream().allMatch(emitted::containsKey);
                 return allDone ? Mono.just(toSse(COMPLETE_EVENT_DATA)) : Mono.empty();
             }));
     }
