@@ -5,6 +5,7 @@ import jakarta.validation.Valid;
 
 import com.example.homeprotect.dto.request.ContractAnalysisRequestDto;
 import com.example.homeprotect.dto.request.RegistryAnalysisRequestDto;
+import com.example.homeprotect.service.ContractAnalysisService;
 import com.example.homeprotect.service.ContractService;
 import com.example.homeprotect.service.PrecedentService;
 import com.example.homeprotect.service.RegistryService;
@@ -29,15 +30,17 @@ public class AnalysisDevController {
   private final ContractService contractService;
   private final PrecedentService precedentService;
   private final RiskClauseAnalyzer riskClauseAnalyzer;
+  private final ContractAnalysisService contractAnalysisService;
 
   public AnalysisDevController(RedisUtil redisUtil, RegistryService registryService,
       ContractService contractService, PrecedentService precedentService,
-      RiskClauseAnalyzer riskClauseAnalyzer) {
+      RiskClauseAnalyzer riskClauseAnalyzer, ContractAnalysisService contractAnalysisService) {
     this.redisUtil = redisUtil;
     this.registryService = registryService;
     this.contractService = contractService;
     this.precedentService = precedentService;
     this.riskClauseAnalyzer = riskClauseAnalyzer;
+    this.contractAnalysisService = contractAnalysisService;
   }
 
   @GetMapping("/{sessionId}/jeonse")
@@ -87,6 +90,20 @@ public class AnalysisDevController {
       @Valid @RequestBody ContractAnalysisRequestDto request) {
     return redisUtil.getClauseResult(request.getDocumentId())
         .flatMap(clauseResult -> riskClauseAnalyzer.analyze(clauseResult.getClauses()))
+        .map(result -> ResponseEntity.ok((Object) result));
+  }
+
+  @PostMapping("/contract/analyze/raw")
+  public Mono<ResponseEntity<Object>> analyzeContractRaw(
+      @Valid @RequestBody ContractAnalysisRequestDto request) {
+    return contractAnalysisService.analyzeRaw(request.getDocumentId())
+        .map(result -> ResponseEntity.ok((Object) result));
+  }
+
+  @PostMapping("/contract/analyze")
+  public Mono<ResponseEntity<Object>> analyzeContract(
+      @Valid @RequestBody ContractAnalysisRequestDto request) {
+    return contractAnalysisService.analyze(request.getDocumentId())
         .map(result -> ResponseEntity.ok((Object) result));
   }
 }
