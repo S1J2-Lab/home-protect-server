@@ -42,8 +42,10 @@ public class PrecedentService {
                     .switchIfEmpty(
                         riskClauseAnalyzer.analyze(clauseResult.getClauses())
                             .flatMap(riskClauses ->
-                                redisUtil.saveRiskClauses(documentId, riskClauses)
-                                    .thenReturn(riskClauses)
+                                riskClauses.isEmpty()
+                                    ? Mono.just(riskClauses)
+                                    : redisUtil.saveRiskClauses(documentId, riskClauses)
+                                        .thenReturn(riskClauses)
                             )
                     )
                     .flatMap(riskClauses -> {
