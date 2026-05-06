@@ -48,15 +48,17 @@ public class AnalysisService {
     private final JeonseRatioService jeonseRatioService;
     private final BuildingService buildingService;
     private final RegistryService registryService;
+    private final ContractService contractService;
     private final ContractAnalysisService contractAnalysisService;
 
     public AnalysisService(RedisUtil redisUtil, JeonseRatioService jeonseRatioService,
         BuildingService buildingService, RegistryService registryService,
-        ContractAnalysisService contractAnalysisService) {
+        ContractService contractService, ContractAnalysisService contractAnalysisService) {
         this.redisUtil = redisUtil;
         this.jeonseRatioService = jeonseRatioService;
         this.buildingService = buildingService;
         this.registryService = registryService;
+        this.contractService = contractService;
         this.contractAnalysisService = contractAnalysisService;
     }
 
@@ -114,21 +116,15 @@ public class AnalysisService {
     }
 
     public Mono<AnalysisResultResponse> getAnalysisResult(String sessionId) {
-        return Mono.zip(
-            redisUtil.getInitSession(sessionId),
-            redisUtil.getAnalysisResult(sessionId)
-        ).map(tuple -> {
-            InitSessionData initSession = tuple.getT1();
-            AnalysisResult result = tuple.getT2();
-            return AnalysisResultResponse.builder()
-                .address(initSession.getAddress())
+        return redisUtil.getAnalysisResult(sessionId)
+            .map(result -> AnalysisResultResponse.builder()
+                .address(result.getAddress())
                 .analyzedAt(result.getAnalyzedAt())
                 .jeonseRatio(result.getJeonseRatio())
                 .registry(result.getRegistryParse() != null ? result.getRegistryParse().getRegistry() : null)
                 .building(result.getBuildingCheck())
                 .contract(result.getContractReview())
-                .build();
-        });
+                .build());
     }
 
     private Mono<Void> executeAnalyses(AnalysisRunRequest request, InitSessionData sessionData) {
@@ -141,16 +137,18 @@ public class AnalysisService {
         CompletableFuture<RegistryAnalysisResult> registryFuture = runStep(
             registryService.analyze(request.getRegistrySessionId()), sessionId, "registryParse");
         CompletableFuture<ContractAnalysisResult> contractFuture = runStep(
-            contractAnalysisService.analyze(request.getContractSessionId()), sessionId, "contractReview");
+            contractService.analyze(request.getContractSessionId())
+                .then(contractAnalysisService.analyze(request.getContractSessionId())),
+            sessionId, "contractReview");
         CompletableFuture<BuildingResponse> buildingFuture = runStep(
             redisUtil.getBuildingInfo(sessionId)
                 .onErrorResume(HomeProtectException.class,
                     e -> buildingService.calculateAndSave(sessionData).then(redisUtil.getBuildingInfo(sessionId))),
             sessionId, "buildingCheck");
-        return awaitAndSaveResult(sessionId, jeonseFuture, registryFuture, contractFuture, buildingFuture);
+        return awaitAndSaveResult(sessionId, sessionData.getAddress(), jeonseFuture, registryFuture, contractFuture, buildingFuture);
     }
 
-    private Mono<Void> awaitAndSaveResult(String sessionId,
+    private Mono<Void> awaitAndSaveResult(String sessionId, String address,
         CompletableFuture<JeonseRatioResponse> jeonseFuture,
         CompletableFuture<RegistryAnalysisResult> registryFuture,
         CompletableFuture<ContractAnalysisResult> contractFuture,
@@ -161,6 +159,7 @@ public class AnalysisService {
                 String analyzedAt = ZonedDateTime.now(ZoneId.of("Asia/Seoul"))
                     .format(ANALYZED_AT_FORMATTER);
                 AnalysisResult result = AnalysisResult.builder()
+                    .address(address)
                     .analyzedAt(analyzedAt)
                     .jeonseRatio(jeonseFuture.getNow(null))
                     .registryParse(registryFuture.getNow(null))

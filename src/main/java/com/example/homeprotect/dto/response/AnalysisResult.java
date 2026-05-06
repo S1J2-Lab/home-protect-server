@@ -13,6 +13,7 @@ import lombok.extern.jackson.Jacksonized;
 @Jacksonized
 public class AnalysisResult {
 
+    private String address;
     private String analyzedAt;
     private JeonseRatioResponse jeonseRatio;
     private RegistryAnalysisResult registryParse;
