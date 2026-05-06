@@ -54,6 +54,7 @@ public class PrecedentService {
                             .flatMapSequential(clause ->
                                 vectorDbClient.search(clause.getOriginalText(), TOP_K)
                                     .map(matches -> buildResult(clause, matches))
+                                    .onErrorResume(e -> Mono.just(buildResult(clause, List.of())))
                             )
                             .collectList();
                     })

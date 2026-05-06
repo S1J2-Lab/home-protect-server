@@ -71,8 +71,8 @@ public class RiskClauseAnalyzer {
                 .filter(c -> riskIndexes.contains(c.getIndex()))
                 .toList();
           } catch (Exception e) {
-            log.error("RiskClauseAnalyzer 파싱 실패, 전체 조항 반환: {}", e.getMessage());
-            return clauses;
+            log.error("RiskClauseAnalyzer 파싱 실패", e);
+            return List.of();
           }
         });
   }

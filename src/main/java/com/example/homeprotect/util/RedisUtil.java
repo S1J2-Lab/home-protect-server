@@ -120,7 +120,7 @@ public class RedisUtil {
                     );
                     return Mono.just(clauses);
                 } catch (JsonProcessingException e) {
-                    return Mono.error(new HomeProtectException(ErrorCode.INTERNAL_ERROR, e));
+                    return reactiveRedisTemplate.delete(key).then(Mono.empty());
                 }
             });
         // 캐시 없으면 empty 반환
