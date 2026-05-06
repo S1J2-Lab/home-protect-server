@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 
 import com.example.homeprotect.dto.redis.InitSessionData;
 import com.example.homeprotect.dto.redis.OcrSessionData;
+import com.example.homeprotect.dto.response.AnalysisResult;
 import com.example.homeprotect.dto.response.BuildingResponse;
 import com.example.homeprotect.dto.response.ContractClauseResult;
 import com.example.homeprotect.dto.response.ContractClauseResult.Clause;
@@ -28,6 +29,8 @@ public class RedisUtil {
     private static final String BUILDING_KEY_PREFIX = "building:";
     private static final String CLAUSE_KEY_PREFIX = "clause:";
     private static final String RISK_CLAUSES_KEY_PREFIX = "riskClauses:";
+    private static final String ANALYSIS_STATUS_KEY_PREFIX = "analysis:status:";
+    private static final String ANALYSIS_RESULT_KEY_PREFIX = "analysis:result:";
     private static final Duration OCR_TTL = Duration.ofMinutes(30);
 
     private final ReactiveRedisTemplate<String, String> reactiveRedisTemplate;
@@ -124,6 +127,30 @@ public class RedisUtil {
                 }
             });
         // 캐시 없으면 empty 반환
+    }
+
+    public Mono<Void> saveAnalysisStatus(String sessionId, String step, String status) {
+        String key = ANALYSIS_STATUS_KEY_PREFIX + sessionId + ":" + step;
+        return reactiveRedisTemplate.opsForValue().set(key, status, OCR_TTL).then();
+    }
+
+    public Mono<String> getAnalysisStatus(String sessionId, String step) {
+        String key = ANALYSIS_STATUS_KEY_PREFIX + sessionId + ":" + step;
+        return reactiveRedisTemplate.opsForValue().get(key);
+    }
+
+    public Mono<Void> saveAnalysisResult(String sessionId, AnalysisResult result) {
+        String key = ANALYSIS_RESULT_KEY_PREFIX + sessionId;
+        return serialize(result)
+            .flatMap(json -> reactiveRedisTemplate.opsForValue().set(key, json, OCR_TTL))
+            .then();
+    }
+
+    public Mono<AnalysisResult> getAnalysisResult(String sessionId) {
+        String key = ANALYSIS_RESULT_KEY_PREFIX + sessionId;
+        return reactiveRedisTemplate.opsForValue().get(key)
+            .switchIfEmpty(Mono.error(new HomeProtectException(ErrorCode.SESSION_EXPIRED)))
+            .flatMap(json -> deserialize(json, AnalysisResult.class));
     }
 
     public Mono<OcrSessionData> getOcrSession(String sessionId) {

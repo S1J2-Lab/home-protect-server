@@ -48,4 +48,26 @@ public class AnalysisController {
                 });
     }
 
+    @PostMapping("/run")
+    public Mono<ResponseEntity<Map<String, Object>>> runAnalysis(
+        @Valid @RequestBody AnalysisRunRequest request) {
+      return analysisService.runAnalysis(request)
+          .map(sessionId -> {
+            Map<String, Object> inner = new LinkedHashMap<>();
+            inner.put("sessionId", sessionId);
+            inner.put("analysisStatus", "processing");
+
+            Map<String, Object> response = new LinkedHashMap<>();
+            response.put("status", "success");
+            response.put("data", inner);
+
+            return ResponseEntity.ok(response);
+          });
+    }
+
+    @GetMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public Flux<ServerSentEvent<String>> streamAnalysisStatus(@RequestParam String sessionId) {
+      return analysisService.streamAnalysisStatus(sessionId);
+    }
+
 }
