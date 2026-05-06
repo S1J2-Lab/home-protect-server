@@ -3,9 +3,12 @@ package com.example.homeprotect.controller;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import jakarta.validation.Valid;
 
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-
+import org.springframework.http.codec.ServerSentEvent;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -13,8 +16,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.homeprotect.dto.request.AnalysisInitRequest;
+import com.example.homeprotect.dto.request.AnalysisRunRequest;
 import com.example.homeprotect.service.AnalysisService;
 
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @RestController
@@ -24,14 +29,13 @@ public class AnalysisController {
     private final AnalysisService analysisService;
 
     public AnalysisController(AnalysisService analysisService) {
-      this.analysisService = analysisService;
+        this.analysisService = analysisService;
     }
 
     @PostMapping("/init")
     public Mono<ResponseEntity<Map<String, Object>>> initAnalysis(
-            @RequestBody AnalysisInitRequest request,
-            @RequestParam("ocrSessionId") String ocrSessionId) {
-        return analysisService.initAnalysis(request, ocrSessionId)
+            @RequestBody AnalysisInitRequest request) {
+        return analysisService.initAnalysis(request)
                 .map(sessionId -> {
                     Map<String, Object> inner = new LinkedHashMap<>();
                     inner.put("sessionId", sessionId);
