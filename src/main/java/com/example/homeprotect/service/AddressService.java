@@ -3,7 +3,6 @@ package com.example.homeprotect.service;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -12,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import com.example.homeprotect.dto.response.AddressPageResponse;
 import com.example.homeprotect.dto.response.AddressResponse;
 import com.example.homeprotect.exception.ErrorCode;
 import com.example.homeprotect.exception.HomeProtectException;
@@ -38,16 +38,25 @@ public class AddressService {
                 .build();
     }
 
-    public Mono<List<AddressResponse>> searchAddress(String keyword) {
+    private static final int COUNT_PER_PAGE = 10;
+
+    public Mono<AddressPageResponse> searchAddress(String keyword, int page) {
         return webClient.get()
-            .uri(buildUri(keyword))
+            .uri(buildUri(keyword, page))
             .retrieve()
             .bodyToMono(JsonNode.class)
             .flatMap(root -> {
                 log.debug("행안부 API 응답 totalCount: {}", root.path("results").path("common").path("totalCount").asText());
                 try {
                     validateResponse(root);
-                    return Mono.just(parseJusoList(root.path("results").path("juso")));
+                    int totalCount = Integer.parseInt(root.path("results").path("common").path("totalCount").asText("0"));
+                    return Mono.just(AddressPageResponse.builder()
+                        .results(parseJusoList(root.path("results").path("juso")))
+                        .totalCount(totalCount)
+                        .currentPage(page)
+                        .countPerPage(COUNT_PER_PAGE)
+                        .hasMore((long) page * COUNT_PER_PAGE < totalCount)
+                        .build());
                 } catch (HomeProtectException e) {
                     return Mono.error(e);
                 }
@@ -62,11 +71,11 @@ public class AddressService {
             });
     }
 
-    private URI buildUri(String keyword) {
+    private URI buildUri(String keyword, int page) {
         return UriComponentsBuilder.fromUriString(moisAddressUrl)
             .queryParam("confmKey", moisAddressKey)
-            .queryParam("currentPage", 1)
-            .queryParam("countPerPage", 10)
+            .queryParam("currentPage", page)
+            .queryParam("countPerPage", COUNT_PER_PAGE)
             .queryParam("keyword", keyword)
             .queryParam("resultType", "json")
             .encode()

@@ -1,5 +1,6 @@
 package com.example.homeprotect.controller;
 
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import java.util.Map;
 
@@ -27,12 +28,20 @@ public class AddressController implements AddressControllerDocs {
     }
 
     @GetMapping("/search")
-    public Mono<ResponseEntity<Map<String, Object>>> searchAddress(@RequestParam @NotBlank String query) {
+    public Mono<ResponseEntity<Map<String, Object>>> searchAddress(
+            @RequestParam @NotBlank String query,
+            @RequestParam(defaultValue = "1") @Min(1) int page) {
 
-            return addressService.searchAddress(query)
-            .map(results -> ResponseEntity.ok(Map.of(
+        return addressService.searchAddress(query, page)
+            .map(result -> ResponseEntity.ok(Map.of(
                 "status", "success",
-                "data", Map.of("results", results)
+                "data", Map.of(
+                    "results", result.getResults(),
+                    "totalCount", result.getTotalCount(),
+                    "currentPage", result.getCurrentPage(),
+                    "countPerPage", result.getCountPerPage(),
+                    "hasMore", result.isHasMore()
+                )
             )));
     }
 }
