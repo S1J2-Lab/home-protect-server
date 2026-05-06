@@ -70,4 +70,17 @@ public class AnalysisController {
       return analysisService.streamAnalysisStatus(sessionId);
     }
 
+    @GetMapping("/result")
+    public Mono<ResponseEntity<Map<String, Object>>> getAnalysisResult(
+        @RequestParam String sessionId) {
+      return analysisService.getAnalysisResult(sessionId)
+          .map(result -> {
+            Map<String, Object> response = new LinkedHashMap<>();
+            response.put("status", "success");
+            response.put("data", result);
+
+            return ResponseEntity.ok(response);
+          });
+    }
+
 }
