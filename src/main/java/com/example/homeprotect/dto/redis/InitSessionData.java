@@ -10,7 +10,6 @@ import lombok.extern.jackson.Jacksonized;
 public class InitSessionData {
 
     private String sessionId;
-    private String ocrSessionId;
     private String address;
     private String admCd;
     private String bdMgtSn;
