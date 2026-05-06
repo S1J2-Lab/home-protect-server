@@ -33,7 +33,11 @@ public interface AddressControllerDocs {
                             "admCd": "1168010100",
                             "rnMgtSn": "116803122010"
                           }
-                        ]
+                        ],
+                        "totalCount": 42,
+                        "currentPage": 1,
+                        "countPerPage": 10,
+                        "hasMore": true
                       }
                     }
                     """)))
@@ -47,5 +51,7 @@ public interface AddressControllerDocs {
                     """)))
     Mono<ResponseEntity<Map<String, Object>>> searchAddress(
             @Parameter(description = "검색할 주소 키워드", example = "테헤란로 123")
-            @RequestParam String query);
+            @RequestParam String query,
+            @Parameter(description = "페이지 번호 (기본값 1)", example = "1")
+            @RequestParam(defaultValue = "1") int page);
 }
