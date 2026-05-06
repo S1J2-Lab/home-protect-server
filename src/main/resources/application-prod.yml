@@ -13,6 +13,13 @@ claude:
   api:
     api-key: ${CLAUDE_API_KEY}
 
+pinecone:
+  api:
+    api-key: ${PINECONE_API_KEY}
+    host: ${PINECONE_HOST}
+    index: ${PINECONE_INDEX}
+    namespace: ${PINECONE_NAMESPACE}
+
 clova:
   ocr:
     api-url: ${CLOVA_OCR_API_URL}

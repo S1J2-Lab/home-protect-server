@@ -26,7 +26,11 @@
         { "name": "CLOVA_OCR_API_URL", "value": "REPLACE_CLOVA_URL" },
         { "name": "CLOVA_OCR_SECRET_KEY", "value": "REPLACE_CLOVA_KEY" },
         { "name": "GEMINI_API_KEY", "value": "REPLACE_GEMINI" },
-        { "name": "CLAUDE_API_KEY", "value": "REPLACE_CLAUDE" }
+        { "name": "CLAUDE_API_KEY", "value": "REPLACE_CLAUDE" },
+        { "name": "PINECONE_API_KEY", "value": "REPLACE_PINECONE_KEY" },
+        { "name": "PINECONE_HOST", "value": "REPLACE_PINECONE_HOST" },
+        { "name": "PINECONE_INDEX", "value": "REPLACE_PINECONE_INDEX" },
+        { "name": "PINECONE_NAMESPACE", "value": "REPLACE_PINECONE_NAMESPACE" }
       ],
       "logConfiguration": {
         "logDriver": "awslogs",

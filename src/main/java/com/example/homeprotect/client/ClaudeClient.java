@@ -37,6 +37,7 @@ public class ClaudeClient {
         Map<String, Object> body = Map.of(
             "model", model,
             "max_tokens", maxTokens,
+            "temperature", 0,
             "messages", List.of(Map.of("role", "user", "content", prompt))
         );
 

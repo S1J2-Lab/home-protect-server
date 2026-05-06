@@ -73,7 +73,8 @@ public class ContractService {
                 String prompt = CONTRACT_PROMPT_TEMPLATE.replace("{{RAW_TEXT}}", rawText);
                 return claudeClient.generate(prompt);
             })
-            .map(this::parseResult);
+            .map(this::parseResult)
+            .flatMap(result -> redisUtil.saveClauseResult(documentId, result).thenReturn(result));
     }
 
     private ContractClauseResult parseResult(String responseText) {

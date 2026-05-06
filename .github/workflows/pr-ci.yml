@@ -40,5 +40,9 @@ jobs:
           CLOVA_OCR_SECRET_KEY: ${{ secrets.CLOVA_OCR_SECRET_KEY }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           CLAUDE_API_KEY: ${{ secrets.CLAUDE_API_KEY }}
+          PINECONE_API_KEY: ${{ secrets.PINECONE_API_KEY }}
+          PINECONE_HOST: ${{ secrets.PINECONE_HOST }}
+          PINECONE_INDEX: ${{ secrets.PINECONE_INDEX }}
+          PINECONE_NAMESPACE: ${{ secrets.PINECONE_NAMESPACE }}
         run: ./gradlew build --no-daemon
         # 컴파일 + 테스트 (둘 중 하나라도 실패하면 머지 불가)
