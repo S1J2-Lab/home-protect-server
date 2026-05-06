@@ -117,7 +117,11 @@ public class ContractAnalysisService {
     }
 
     private ContractAnalysisResult prefixPrecedents(ContractAnalysisResult result) {
-        Stream.concat(result.getToxicClauses().stream(), result.getCautionClauses().stream())
+        List<ContractAnalysisResult.AnalyzedClause> toxic =
+            result.getToxicClauses() != null ? result.getToxicClauses() : List.of();
+        List<ContractAnalysisResult.AnalyzedClause> caution =
+            result.getCautionClauses() != null ? result.getCautionClauses() : List.of();
+        Stream.concat(toxic.stream(), caution.stream())
             .filter(clause -> clause.getPrecedent() != null)
             .forEach(clause -> clause.setPrecedent("대법원 " + clause.getPrecedent()));
         return result;
