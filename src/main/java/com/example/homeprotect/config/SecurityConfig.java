@@ -17,9 +17,8 @@ public class SecurityConfig {
 
     private static final List<String> ALLOWED_ORIGINS = List.of(
         "http://localhost:5173",
-        "https://d376fu0rzbcwop.cloudfront.net"
-
-        // 프로덕션 도메인 추가 시 여기에 append
+        "https://d376fu0rzbcwop.cloudfront.net",
+        "https://homeprotect.shop"
     );
 
     @Bean
