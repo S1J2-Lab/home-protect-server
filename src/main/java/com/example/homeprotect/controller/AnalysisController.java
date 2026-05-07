@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.example.homeprotect.controller.docs.AnalysisControllerDocs;
 import com.example.homeprotect.dto.request.AnalysisInitRequest;
 import com.example.homeprotect.dto.request.AnalysisRunRequest;
 import com.example.homeprotect.service.AnalysisService;
@@ -24,7 +25,7 @@ import reactor.core.publisher.Mono;
 
 @RestController
 @RequestMapping("/analysis")
-public class AnalysisController {
+public class AnalysisController implements AnalysisControllerDocs {
 
     private final AnalysisService analysisService;
 
