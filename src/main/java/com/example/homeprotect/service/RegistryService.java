@@ -23,16 +23,16 @@ public class RegistryService {
     private static final String REGISTRY_PROMPT_TEMPLATE = """
             당신은 한국 등기부등본 문서를 분석하는 전문가입니다.
             아래에 등기부등본 OCR 원문 텍스트가 주어집니다.
-            이 텍스트를 분석하여 다음 항목을 추출하고, 반드시 아래 JSON 형식으로만 응답하세요.
+            제공된 OCR 텍스트에서 현재 유효한 권리(말소 사항 제외)를 분석하여 다음 항목을 추출하고, 반드시 아래 JSON 형식으로만 응답하세요.
             설명, 서론, 주석 등 JSON 외의 어떤 텍스트도 출력하지 마세요.
-
-            [분석 기준]
-            1. mortgageCount: 근저당권 설정 건수 (없으면 0)
-            2. mortgages: 근저당 목록. 각 항목은 bank(채권자/은행명)와 amount(채권최고액, 숫자만)
-            3. totalMortgage: mortgages의 amount 합산
-            4. trustWarning: "신탁" 키워드가 등기 목적 또는 원인에 포함되면 true
-            5. priorLease: "선순위" 또는 "선순위임차인" 키워드가 포함되면 true
-            6. ownershipChangeRecent: 소유권 이전 등기가 {{TODAY}} 기준 최근 2년 이내에 발생했으면 true
+            
+            [분석 기준 및 규칙]
+            1. mortgageCount: 현재 유효한 근저당권 설정 건수 (줄이 그어진 '말소' 사항은 제외, 없으면 0)
+            2. mortgages: 근저당 목록. 각 항목은 bank(채권자/은행명)와 amount(채권최고액, 콤마 없이 숫자만 표기)
+            3. totalMortgage: mortgages 목록에 포함된 모든 amount의 합산 금액
+            4. trustWarning: "신탁" 키워드가 등기 목적 또는 원인(주로 갑구)에 포함되면 true
+            5. priorLease: "선순위", "선순위임차인" 키워드가 포함되거나 을구에 "임차권", "전세권" 설정이 있으면 true
+            6. ownershipChangeRecent: 소유권 이전 등기 날짜가 기준일({{TODAY}})로부터 2년 이내이면 true
 
             [출력 형식]
             {
