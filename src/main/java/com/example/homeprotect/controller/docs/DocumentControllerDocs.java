@@ -36,8 +36,9 @@ public interface DocumentControllerDocs {
                   }
                 }
                 """)))
-    @ApiResponse(responseCode = "400", description = "E-1: 개인정보(PII) 감지",
-        content = @Content(examples = @ExampleObject(value = """
+    @ApiResponse(responseCode = "400", description = "요청 오류 (PII 감지 또는 지원하지 않는 파일 형식)",
+        content = @Content(examples = {
+            @ExampleObject(name = "PII_DETECTED", value = """
                 {
                   "status": "error",
                   "error": {
@@ -47,9 +48,8 @@ public interface DocumentControllerDocs {
                     "nonMasked": ["주민등록번호", "전화번호"]
                   }
                 }
-                """)))
-    @ApiResponse(responseCode = "400", description = "E-2: 지원하지 않는 파일 형식",
-        content = @Content(examples = @ExampleObject(value = """
+                """),
+            @ExampleObject(name = "INVALID_FILE_TYPE", value = """
                 {
                   "status": "error",
                   "error": {
@@ -58,7 +58,8 @@ public interface DocumentControllerDocs {
                     "field": "file"
                   }
                 }
-                """)))
+                """)
+        }))
     @ApiResponse(responseCode = "422", description = "E-3: OCR 판독 실패",
         content = @Content(examples = @ExampleObject(value = """
                 {
@@ -91,8 +92,9 @@ public interface DocumentControllerDocs {
                   }
                 }
                 """)))
-    @ApiResponse(responseCode = "400", description = "E-1: 개인정보(PII) 감지",
-        content = @Content(examples = @ExampleObject(value = """
+    @ApiResponse(responseCode = "400", description = "요청 오류 (PII 감지 또는 지원하지 않는 파일 형식)",
+        content = @Content(examples = {
+            @ExampleObject(name = "PII_DETECTED", value = """
                 {
                   "status": "error",
                   "error": {
@@ -102,9 +104,8 @@ public interface DocumentControllerDocs {
                     "nonMasked": ["주민등록번호", "전화번호"]
                   }
                 }
-                """)))
-    @ApiResponse(responseCode = "400", description = "E-2: 지원하지 않는 파일 형식",
-        content = @Content(examples = @ExampleObject(value = """
+                """),
+            @ExampleObject(name = "INVALID_FILE_TYPE", value = """
                 {
                   "status": "error",
                   "error": {
@@ -113,7 +114,8 @@ public interface DocumentControllerDocs {
                     "field": "file"
                   }
                 }
-                """)))
+                """)
+        }))
     @ApiResponse(responseCode = "422", description = "E-3: OCR 판독 실패",
         content = @Content(examples = @ExampleObject(value = """
                 {
