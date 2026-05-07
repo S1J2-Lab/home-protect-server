@@ -26,21 +26,37 @@ public class DocumentController implements DocumentControllerDocs {
         this.documentService = documentService;
     }
 
-    @PostMapping(value = "/ocr", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public Mono<ResponseEntity<Map<String, Object>>> scanDocument(
-            @RequestPart("file") FilePart file,
-            @RequestPart("docType") String docType) {
-        return documentService.scanDocument(file, docType)
+    @PostMapping(value = "/ocr/registry", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public Mono<ResponseEntity<Map<String, Object>>> scanRegistry(
+            @RequestPart("file") FilePart file) {
+        return documentService.scanDocument(file, "registry")
             .map(data -> {
-              Map<String, Object> inner = new LinkedHashMap<>();
-              inner.put("sessionId", data.getSessionId());
-              inner.put("safe", data.isSafe());
+                Map<String, Object> inner = new LinkedHashMap<>();
+                inner.put("registrySessionId", data.getSessionId());
+                inner.put("safe", data.isSafe());
 
-              Map<String, Object> response = new LinkedHashMap<>();
-              response.put("status", "success");
-              response.put("data", inner);
+                Map<String, Object> response = new LinkedHashMap<>();
+                response.put("status", "success");
+                response.put("data", inner);
 
-              return ResponseEntity.ok(response);
+                return ResponseEntity.ok(response);
+            });
+    }
+
+    @PostMapping(value = "/ocr/contract", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public Mono<ResponseEntity<Map<String, Object>>> scanContract(
+            @RequestPart("file") FilePart file) {
+        return documentService.scanDocument(file, "contract")
+            .map(data -> {
+                Map<String, Object> inner = new LinkedHashMap<>();
+                inner.put("contractSessionId", data.getSessionId());
+                inner.put("safe", data.isSafe());
+
+                Map<String, Object> response = new LinkedHashMap<>();
+                response.put("status", "success");
+                response.put("data", inner);
+
+                return ResponseEntity.ok(response);
             });
     }
 }
