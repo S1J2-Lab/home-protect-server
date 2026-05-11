@@ -1,6 +1,11 @@
 package com.example.homeprotect.client;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
+import java.nio.charset.CharsetDecoder;
+import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -39,10 +44,14 @@ public class RentApiClient {
     @Value("${public-api.external.seoul-rent-type-jeonse}")
     private String jeonseTypeValue;
 
-    private final WebClient webClient;
+    private static final Charset CP949 = Charset.forName("MS949");
 
-    public RentApiClient(WebClient.Builder webClientBuilder) {
+    private final WebClient webClient;
+    private final ObjectMapper objectMapper;
+
+    public RentApiClient(WebClient.Builder webClientBuilder, ObjectMapper objectMapper) {
         this.webClient = webClientBuilder.clone().build();
+        this.objectMapper = objectMapper;
     }
 
     public Mono<List<Long>> fetchJeonseAmounts(String cggCd, String stdgCd, String mno, String sno, String bldgUsg) {
@@ -106,7 +115,24 @@ public class RentApiClient {
         return webClient.get()
             .uri(uri)
             .retrieve()
-            .bodyToMono(JsonNode.class);
+            .bodyToMono(byte[].class)
+            .flatMap(bytes -> {
+                try {
+                    return Mono.just(objectMapper.readTree(decodeSeoulResponse(bytes)));
+                } catch (Exception e) {
+                    return Mono.error(new RuntimeException("Seoul rent API parse failed: " + e.getMessage()));
+                }
+            });
+    }
+
+    private String decodeSeoulResponse(byte[] bytes) {
+        try {
+            CharsetDecoder utf8 = StandardCharsets.UTF_8.newDecoder()
+                .onMalformedInput(CodingErrorAction.REPORT);
+            return utf8.decode(ByteBuffer.wrap(bytes)).toString();
+        } catch (Exception e) {
+            return new String(bytes, CP949);
+        }
     }
 
     private String buildUri(int start, int end, String year, String cggCd, String bldgUsg) {
