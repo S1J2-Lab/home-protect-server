@@ -34,13 +34,13 @@ public class BuildingService {
 
     public Mono<Void> calculateAndSave(InitSessionData sessionData) {
         String bdMgtSn = sessionData.getBdMgtSn();
-        if (bdMgtSn == null || bdMgtSn.length() < 19) {
+        if (bdMgtSn == null || bdMgtSn.length() < 10) {
             return Mono.error(new HomeProtectException(ErrorCode.INVALID_ADDRESS));
         }
         String sigunguCd = bdMgtSn.substring(0, 5);
         String bjdongCd = bdMgtSn.substring(5, 10);
-        String bun = bdMgtSn.substring(11, 15);  // 지번 본번
-        String ji = bdMgtSn.substring(15, 19);   // 지번 부번
+        String bun = sessionData.getMno();
+        String ji = sessionData.getSno();
 
         return Mono.zip(
             buildingApiClient.fetchTitleItem(sigunguCd, bjdongCd, bun, ji),
