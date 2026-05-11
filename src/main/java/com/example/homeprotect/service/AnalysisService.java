@@ -186,7 +186,8 @@ public class AnalysisService {
         Map<String, String> emitted = new HashMap<>();
         return Flux.interval(Duration.ZERO, Duration.ofMillis(POLL_INTERVAL_MS))
             .concatMap(tick -> collectNewEvents(sessionId, emitted))
-            .takeUntil(sse -> ANALYSIS_STEPS.stream().allMatch(emitted::containsKey));
+            .takeUntil(sse -> ANALYSIS_STEPS.stream().allMatch(emitted::containsKey))
+            .concatWith(Mono.just(toSse(COMPLETE_EVENT_DATA)));
     }
 
     private Flux<ServerSentEvent<String>> collectNewEvents(String sessionId, Map<String, String> emitted) {
@@ -199,11 +200,7 @@ public class AnalysisService {
                     .map(status -> "error".equals(status)
                         ? toSse("{\"step\":\"error\",\"errorCode\":\"API_UNAVAILABLE\"}")
                         : toSse("{\"step\":\"" + step + "\",\"status\":\"done\"}"))
-            )
-            .concatWith(Mono.defer(() -> {
-                boolean allDone = ANALYSIS_STEPS.stream().allMatch(emitted::containsKey);
-                return allDone ? Mono.just(toSse(COMPLETE_EVENT_DATA)) : Mono.empty();
-            }));
+            );
     }
 
     private ServerSentEvent<String> toSse(String data) {
