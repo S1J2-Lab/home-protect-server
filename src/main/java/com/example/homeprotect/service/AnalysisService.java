@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeoutException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,7 +39,9 @@ public class AnalysisService {
     private static final Logger log = LoggerFactory.getLogger(AnalysisService.class);
     private static final Set<String> VALID_CONTRACT_TYPES = Set.of("jeonse", "half_jeonse", "monthly");
     private static final List<String> ANALYSIS_STEPS = List.of("jeonseRatio", "registryParse", "contractReview", "buildingCheck");
-    private static final int ANALYSIS_TIMEOUT_SECONDS = 30;
+    private static final int ANALYSIS_TIMEOUT_SECONDS = 60;
+    private static final int CONTRACT_REVIEW_TIMEOUT_SECONDS = 180;
+    private static final int SSE_TIMEOUT_SECONDS = 300;
     private static final long POLL_INTERVAL_MS = 500;
     private static final String COMPLETE_EVENT_DATA = "{\"step\":\"complete\"}";
     private static final DateTimeFormatter ANALYZED_AT_FORMATTER =
@@ -108,7 +111,9 @@ public class AnalysisService {
             .flatMap(sessionData -> executeAnalyses(request, sessionData))
             .onErrorResume(e -> {
                 log.error("분석 실패 [{}]: {}", request.getSessionId(), e.getMessage());
-                return Mono.empty();
+                return Flux.fromIterable(ANALYSIS_STEPS)
+                    .flatMap(step -> redisUtil.saveAnalysisStatus(request.getSessionId(), step, "error"))
+                    .then();
             })
             .subscribeOn(Schedulers.boundedElastic())
             .subscribe();
@@ -139,7 +144,7 @@ public class AnalysisService {
         CompletableFuture<ContractAnalysisResult> contractFuture = runStep(
             contractService.analyze(request.getContractSessionId())
                 .then(contractAnalysisService.analyze(request.getContractSessionId())),
-            sessionId, "contractReview");
+            sessionId, "contractReview", CONTRACT_REVIEW_TIMEOUT_SECONDS);
         CompletableFuture<BuildingResponse> buildingFuture = runStep(
             redisUtil.getBuildingInfo(sessionId)
                 .onErrorResume(HomeProtectException.class,
@@ -172,8 +177,12 @@ public class AnalysisService {
     }
 
     private <T> CompletableFuture<T> runStep(Mono<T> analysis, String sessionId, String step) {
+        return runStep(analysis, sessionId, step, ANALYSIS_TIMEOUT_SECONDS);
+    }
+
+    private <T> CompletableFuture<T> runStep(Mono<T> analysis, String sessionId, String step, int timeoutSeconds) {
         return analysis
-            .timeout(Duration.ofSeconds(ANALYSIS_TIMEOUT_SECONDS))
+            .timeout(Duration.ofSeconds(timeoutSeconds))
             .flatMap(result -> redisUtil.saveAnalysisStatus(sessionId, step, "done").thenReturn(result))
             .onErrorResume(e -> {
                 log.error("분석 단계 실패 [{}][{}]: {}", sessionId, step, e.getMessage());
@@ -187,7 +196,10 @@ public class AnalysisService {
         return Flux.interval(Duration.ZERO, Duration.ofMillis(POLL_INTERVAL_MS))
             .concatMap(tick -> collectNewEvents(sessionId, emitted))
             .takeUntil(sse -> ANALYSIS_STEPS.stream().allMatch(emitted::containsKey))
-            .concatWith(Mono.just(toSse(COMPLETE_EVENT_DATA)));
+            .concatWith(Mono.just(toSse(COMPLETE_EVENT_DATA)))
+            .timeout(Duration.ofSeconds(SSE_TIMEOUT_SECONDS))
+            .onErrorResume(TimeoutException.class,
+                e -> Flux.just(toSse("{\"step\":\"timeout\"}")));
     }
 
     private Flux<ServerSentEvent<String>> collectNewEvents(String sessionId, Map<String, String> emitted) {
@@ -198,7 +210,7 @@ public class AnalysisService {
                     .filter(status -> "done".equals(status) || "error".equals(status))
                     .doOnNext(status -> emitted.put(step, status))
                     .map(status -> "error".equals(status)
-                        ? toSse("{\"step\":\"error\",\"errorCode\":\"API_UNAVAILABLE\"}")
+                        ? toSse("{\"step\":\"" + step + "\",\"status\":\"error\"}")
                         : toSse("{\"step\":\"" + step + "\",\"status\":\"done\"}"))
             );
     }

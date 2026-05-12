@@ -2,6 +2,7 @@ package com.example.homeprotect.config;
 
 import io.netty.channel.ChannelOption;
 import io.netty.handler.timeout.ReadTimeoutHandler;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpHeaders;
@@ -18,6 +19,7 @@ public class WebClientConfig {
 
     private static final int CONNECTION_TIMEOUT_MS = 5_000;
     private static final int RESPONSE_TIMEOUT_MS = 30_000;
+    private static final int SEOUL_API_RESPONSE_TIMEOUT_MS = 120_000;
 
     @Bean
     public WebClient.Builder webClientBuilder() {
@@ -29,7 +31,20 @@ public class WebClientConfig {
             .clientConnector(new ReactorClientHttpConnector(httpClient))
             .codecs(configurer -> configurer
                 .defaultCodecs()
-                .maxInMemorySize(10 * 1024 * 1024)); // 10MB로 늘리기
+                .maxInMemorySize(10 * 1024 * 1024));
+    }
+
+    @Bean
+    @Qualifier("seoulWebClientBuilder")
+    public WebClient.Builder seoulWebClientBuilder() {
+        HttpClient httpClient = buildHttpClient(CONNECTION_TIMEOUT_MS, SEOUL_API_RESPONSE_TIMEOUT_MS);
+
+        return WebClient.builder()
+            .defaultHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE)
+            .clientConnector(new ReactorClientHttpConnector(httpClient))
+            .codecs(configurer -> configurer
+                .defaultCodecs()
+                .maxInMemorySize(10 * 1024 * 1024));
     }
 
     static HttpClient buildHttpClient(int connectTimeoutMs, int responseTimeoutMs) {

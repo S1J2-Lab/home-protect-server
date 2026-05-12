@@ -14,6 +14,7 @@ import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -43,7 +44,8 @@ public class RealTradeApiClient {
     private final WebClient webClient;
     private final ObjectMapper objectMapper;
 
-    public RealTradeApiClient(WebClient.Builder webClientBuilder, ObjectMapper objectMapper) {
+    public RealTradeApiClient(@Qualifier("seoulWebClientBuilder") WebClient.Builder webClientBuilder,
+                              ObjectMapper objectMapper) {
         this.webClient = webClientBuilder.clone().build();
         this.objectMapper = objectMapper;
     }
@@ -55,16 +57,16 @@ public class RealTradeApiClient {
         String lastYear = String.valueOf(today.getYear() - 1);
         String twoYearsAgo = String.valueOf(today.getYear() - 2);
 
-        Mono<List<Long>> thisYearData = fetchTradeByYear(thisYear, cggCd, bldgUsg, cutoffDate);
-        Mono<List<Long>> lastYearData = fetchTradeByYear(lastYear, cggCd, bldgUsg, cutoffDate);
-        Mono<List<Long>> twoYearsAgoData = fetchTradeByYear(twoYearsAgo, cggCd, bldgUsg, cutoffDate);
-
-
-        return Mono.zip(thisYearData, lastYearData, twoYearsAgoData)
-            .map(tuple -> {
-                List<Long> combined = new ArrayList<>(tuple.getT1());
-                combined.addAll(tuple.getT2());
-                combined.addAll(tuple.getT3());
+        return Flux.concat(
+                fetchTradeByYear(thisYear, cggCd, bldgUsg, cutoffDate),
+                fetchTradeByYear(lastYear, cggCd, bldgUsg, cutoffDate),
+                fetchTradeByYear(twoYearsAgo, cggCd, bldgUsg, cutoffDate)
+            )
+            .collectList()
+            .map(lists -> {
+                List<Long> combined = lists.stream()
+                    .flatMap(List::stream)
+                    .collect(java.util.stream.Collectors.toList());
                 return combined.stream().mapToLong(Long::longValue).sum()
                     / Math.max(combined.size(), 1);
             });
@@ -100,7 +102,7 @@ public class RealTradeApiClient {
                     });
             })
             .onErrorResume(e -> {
-                log.error("서울시 매매 실거래가 API 호출 실패 [{}년]: {}", year, e.getMessage());
+                log.error("서울시 매매 실거래가 API 호출 실패 [{}년]:", year, e);
                 return Mono.just(new ArrayList<>());
             });
     }
