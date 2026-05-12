@@ -75,7 +75,7 @@ public class JeonseRatioService {
         long convertedDeposit = calcConvertedDeposit(data);
 
         Double ratioPercent = (convertedDeposit > 0 && avgTradeAmount > 0)
-            ? (double) convertedDeposit / avgTradeAmount * 100
+            ? Math.round((double) convertedDeposit / avgTradeAmount * 10000) / 100.0
             : null;
 
         boolean lowReliability = sampleCount < 3;
