@@ -1,5 +1,8 @@
 package com.example.homeprotect.dto.request;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+
 import com.example.homeprotect.dto.redis.InitSessionData.ContractPeriod;
 
 import lombok.AllArgsConstructor;
@@ -13,14 +16,14 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class AnalysisInitRequest {
 
-    private String address;
-    private String admCd;
-    private String bdMgtSn;
+    @NotBlank private String address;
+    @NotBlank private String admCd;
+    @NotBlank private String bdMgtSn;
     private String rnMgtSn;
     private String mno;
     private String sno;
-    private Long deposit;
+    @NotNull  private Long deposit;
     private Long monthlyRent;
-    private String contractType;
+    @NotBlank private String contractType;
     private ContractPeriod contractPeriod;
 }

@@ -14,6 +14,7 @@ import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -49,7 +50,8 @@ public class RentApiClient {
     private final WebClient webClient;
     private final ObjectMapper objectMapper;
 
-    public RentApiClient(WebClient.Builder webClientBuilder, ObjectMapper objectMapper) {
+    public RentApiClient(@Qualifier("seoulWebClientBuilder") WebClient.Builder webClientBuilder,
+                         ObjectMapper objectMapper) {
         this.webClient = webClientBuilder.clone().build();
         this.objectMapper = objectMapper;
     }
@@ -61,17 +63,15 @@ public class RentApiClient {
         String lastYear = String.valueOf(today.getYear() - 1);
         String twoYearsAgo = String.valueOf(today.getYear() - 2);
 
-        Mono<List<Long>> thisYearData = fetchByYear(thisYear, cggCd, stdgCd, mno, sno, bldgUsg, cutoffDate);
-        Mono<List<Long>> lastYearData = fetchByYear(lastYear, cggCd, stdgCd, mno, sno, bldgUsg, cutoffDate);
-        Mono<List<Long>> twoYearsAgoData = fetchByYear(twoYearsAgo, cggCd, stdgCd, mno, sno, bldgUsg, cutoffDate);
-
-        return Mono.zip(thisYearData, lastYearData, twoYearsAgoData)
-            .map(tuple -> {
-                List<Long> combined = new ArrayList<>(tuple.getT1());
-                combined.addAll(tuple.getT2());
-                combined.addAll(tuple.getT3());
-                return combined;
-            });
+        return Flux.concat(
+                fetchByYear(thisYear, cggCd, stdgCd, mno, sno, bldgUsg, cutoffDate),
+                fetchByYear(lastYear, cggCd, stdgCd, mno, sno, bldgUsg, cutoffDate),
+                fetchByYear(twoYearsAgo, cggCd, stdgCd, mno, sno, bldgUsg, cutoffDate)
+            )
+            .collectList()
+            .map(lists -> lists.stream()
+                .flatMap(List::stream)
+                .collect(java.util.stream.Collectors.toList()));
     }
 
     private Mono<List<Long>> fetchByYear(String year, String cggCd, String stdgCd,
@@ -105,7 +105,7 @@ public class RentApiClient {
                     });
             })
             .onErrorResume(e -> {
-                log.error("서울시 전월세가 API 호출 실패 [{}년]: {}", year, e.getMessage());
+                log.error("서울시 전월세가 API 호출 실패 [{}년]:", year, e);
                 return Mono.just(new ArrayList<>());
             });
     }
