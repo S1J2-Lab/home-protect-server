@@ -80,4 +80,8 @@ public class BuildingService {
         return useAprDay.substring(0, 4) + "-" + useAprDay.substring(4, 6) + "-" + useAprDay.substring(6, 8);
     }
 
+    private String padFour(String value) {
+        if (value == null || value.isBlank()) return "0000";
+        return String.format("%04d", Integer.parseInt(value));
+    }
 }
