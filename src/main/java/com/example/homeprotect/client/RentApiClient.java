@@ -112,6 +112,7 @@ public class RentApiClient {
 
     private Mono<JsonNode> fetchPage(int start, int end, String year, String cggCd, String bldgUsg) {
         String uri = buildUri(start, end, year, cggCd, bldgUsg);
+        log.info("[전월세API] 요청 URL={}", uri);
         return webClient.get()
             .uri(uri)
             .retrieve()
@@ -152,12 +153,17 @@ public class RentApiClient {
         String mno, String sno) {
         List<Long> amounts = new ArrayList<>();
         JsonNode rows = root.path(serviceName).path("row");
+        int totalRows = rows.size();
+        log.info("[전월세API] 응답 총 rows={}, 필터 cggCd={}, stdgCd={}, mno={}", totalRows, cggCd, stdgCd, mno);
         for (JsonNode row : rows) {
             if (!cggCd.equals(row.path("CGG_CD").asText())) continue;
             if (stdgCd != null && !stdgCd.isEmpty()
                 && !stdgCd.equals(row.path("STDG_CD").asText())) continue;
             if (mno != null && !mno.isEmpty()
                 && !mno.equals(row.path("MNO").asText())) continue;
+            log.info("[전월세API] 매칭 row - CGG_CD={}, STDG_CD={}, MNO={}, SNO={}, GRFE={}",
+                row.path("CGG_CD").asText(), row.path("STDG_CD").asText(),
+                row.path("MNO").asText(), row.path("SNO").asText(), row.path("GRFE").asText());
             if (sno != null && !sno.isEmpty()
                 && !sno.equals(row.path("SNO").asText())) continue;
             if (!jeonseTypeValue.equals(row.path(rentTypeField).asText())) continue;
