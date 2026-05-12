@@ -46,18 +46,7 @@ public class JeonseRatioService {
         String bldgUsg = parseBldgUsg(sessionData.getAddress());
 
         Mono<List<Long>> jeonseAmountsMono =
-            // 1차: 건물 단위
-            rentApiClient.fetchJeonseAmounts(cggCd, stdgCd, mno, sno, bldgUsg)
-                .flatMap(amounts -> {
-                    if (amounts.size() >= 3) return Mono.just(amounts);
-                    // 2차: 법정동 단위로 확장
-                    return rentApiClient.fetchJeonseAmounts(cggCd, stdgCd, null, null, bldgUsg);
-                })
-                .flatMap(amounts -> {
-                    if (amounts.size() >= 3) return Mono.just(amounts);
-                    // 3차: 구 단위로 확장
-                    return rentApiClient.fetchJeonseAmounts(cggCd, null, null, null, bldgUsg);
-                });
+            rentApiClient.fetchJeonseAmounts(cggCd, stdgCd, mno, sno, bldgUsg);
 
         return Mono.zip(jeonseAmountsMono, realTradeApiClient.fetchAverageTradeAmount(cggCd, bldgUsg))
                 .flatMap(tuple -> {
