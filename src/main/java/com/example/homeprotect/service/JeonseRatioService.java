@@ -52,7 +52,7 @@ public class JeonseRatioService {
         log.info("[전세가율] 요청 파라미터 - cggCd={}, stdgCd={}, mno={}, sno={}, bldgUsg={}", cggCd, stdgCd, mno, sno, bldgUsg);
 
         Mono<List<Long>> jeonseAmountsMono =
-            rentApiClient.fetchJeonseAmounts(cggCd, stdgCd, mno, sno, bldgUsg);
+            rentApiClient.fetchJeonseAmounts(cggCd, stdgCd, mno, sno, "");
 
         return Mono.zip(jeonseAmountsMono, realTradeApiClient.fetchAverageTradeAmount(cggCd, bldgUsg))
                 .flatMap(tuple -> {

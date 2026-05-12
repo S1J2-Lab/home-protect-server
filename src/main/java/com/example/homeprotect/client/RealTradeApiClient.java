@@ -59,6 +59,7 @@ public class RealTradeApiClient {
         Mono<List<Long>> lastYearData = fetchTradeByYear(lastYear, cggCd, bldgUsg, cutoffDate);
         Mono<List<Long>> twoYearsAgoData = fetchTradeByYear(twoYearsAgo, cggCd, bldgUsg, cutoffDate);
 
+
         return Mono.zip(thisYearData, lastYearData, twoYearsAgoData)
             .map(tuple -> {
                 List<Long> combined = new ArrayList<>(tuple.getT1());
@@ -70,9 +71,9 @@ public class RealTradeApiClient {
     }
 
     private Mono<List<Long>> fetchTradeByYear(String year, String cggCd, String bldgUsg, String cutoffDate) {
-        return fetchPage(1, PAGE_SIZE, year, cggCd, bldgUsg)
+        return fetchPage(1, PAGE_SIZE, year, cggCd, "")
             .flatMap(root -> {
-                List<Long> firstPage = parseTradeAmounts(root, cutoffDate, cggCd);
+                List<Long> firstPage = parseTradeAmounts(root, cutoffDate, cggCd, bldgUsg);
                 int totalCount = root.path(serviceName).path("list_total_count").asInt();
                 if (totalCount <= PAGE_SIZE) {
                     return Mono.just(firstPage);
@@ -83,8 +84,8 @@ public class RealTradeApiClient {
                     int start = (page - 1) * PAGE_SIZE + 1;
                     int end = page * PAGE_SIZE;
                     final int p = page;
-                    remainingMonos.add(fetchPage(start, end, year, cggCd, bldgUsg)
-                        .map(r -> parseTradeAmounts(r, cutoffDate, cggCd))
+                    remainingMonos.add(fetchPage(start, end, year, cggCd, "")
+                        .map(r -> parseTradeAmounts(r, cutoffDate, cggCd, bldgUsg))
                         .onErrorResume(e -> {
                             log.error("서울시 매매 실거래가 API 호출 실패 [{}년 {}페이지]: {}", year, p, e.getMessage());
                             return Mono.just(new ArrayList<>());
@@ -141,11 +142,13 @@ public class RealTradeApiClient {
       return base + path;
     }
 
-    private List<Long> parseTradeAmounts(JsonNode root, String cutoffDate, String cggCd) {
+    private List<Long> parseTradeAmounts(JsonNode root, String cutoffDate, String cggCd, String bldgUsg) {
         List<Long> amounts = new ArrayList<>();
         JsonNode rows = root.path(serviceName).path("row");
         for (JsonNode row : rows) {
             if (!cggCd.equals(row.path("CGG_CD").asText())) continue;
+            if (bldgUsg != null && !bldgUsg.isEmpty()
+                && !bldgUsg.equals(row.path("BLDG_USG").asText())) continue;
             if (row.path("CTRT_DAY").asText().compareTo(cutoffDate) < 0) continue;
             double amt = row.path("THING_AMT").asDouble();
             if (amt > 0) amounts.add((long) (amt * 10_000));
