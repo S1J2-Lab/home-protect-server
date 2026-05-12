@@ -1,5 +1,7 @@
 package com.example.homeprotect.service;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import com.example.homeprotect.client.RealTradeApiClient;
@@ -14,6 +16,8 @@ import java.util.List;
 
 @Service
 public class JeonseRatioService {
+
+    private static final Logger log = LoggerFactory.getLogger(JeonseRatioService.class);
 
     private final RentApiClient rentApiClient;
     private final RealTradeApiClient realTradeApiClient;
@@ -45,6 +49,8 @@ public class JeonseRatioService {
         String sno = sessionData.getSno();
         String bldgUsg = parseBldgUsg(sessionData.getAddress());
 
+        log.info("[전세가율] 요청 파라미터 - cggCd={}, stdgCd={}, mno={}, sno={}, bldgUsg={}", cggCd, stdgCd, mno, sno, bldgUsg);
+
         Mono<List<Long>> jeonseAmountsMono =
             rentApiClient.fetchJeonseAmounts(cggCd, stdgCd, mno, sno, bldgUsg);
 
@@ -52,6 +58,7 @@ public class JeonseRatioService {
                 .flatMap(tuple -> {
                     List<Long> jeonseAmounts = tuple.getT1();
                     long avgTradeAmount = tuple.getT2();
+                    log.info("[전세가율] 전세 거래 건수={}, 매매 평균가={}", jeonseAmounts.size(), avgTradeAmount);
                     JeonseRatioResponse response = buildResponse(sessionData, jeonseAmounts, avgTradeAmount);
                     return redisUtil.saveJeonseRatio(sessionData.getSessionId(), response);
                 });
