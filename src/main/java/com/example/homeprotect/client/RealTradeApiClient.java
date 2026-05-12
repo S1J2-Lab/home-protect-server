@@ -14,7 +14,6 @@ import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -44,8 +43,7 @@ public class RealTradeApiClient {
     private final WebClient webClient;
     private final ObjectMapper objectMapper;
 
-    public RealTradeApiClient(@Qualifier("seoulWebClientBuilder") WebClient.Builder webClientBuilder,
-                              ObjectMapper objectMapper) {
+    public RealTradeApiClient(WebClient.Builder webClientBuilder, ObjectMapper objectMapper) {
         this.webClient = webClientBuilder.clone().build();
         this.objectMapper = objectMapper;
     }
@@ -102,7 +100,7 @@ public class RealTradeApiClient {
                     });
             })
             .onErrorResume(e -> {
-                log.error("서울시 매매 실거래가 API 호출 실패 [{}년]:", year, e);
+                log.error("서울시 매매 실거래가 API 호출 실패 [{}년]: {}", year, e.getMessage());
                 return Mono.just(new ArrayList<>());
             });
     }

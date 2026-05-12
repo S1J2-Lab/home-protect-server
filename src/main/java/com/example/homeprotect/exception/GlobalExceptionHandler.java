@@ -4,11 +4,9 @@ import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import org.springframework.web.bind.support.WebExchangeBindException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -26,13 +24,6 @@ public class GlobalExceptionHandler {
         log.warn("[{}] {}", e.getErrorCode().name(), e.getErrorCode().getMessage());
         PiiErrorResponse body = new PiiErrorResponse(e.getErrorCode(), e.getNonMasked());
         return ResponseEntity.status(e.getErrorCode().getStatus()).body(body);
-    }
-
-    @ExceptionHandler(WebExchangeBindException.class)
-    public ResponseEntity<ErrorResponse> handleWebExchangeBindException(WebExchangeBindException e) {
-        log.warn("[INVALID_REQUEST] {}", e.getMessage());
-        ErrorResponse body = ErrorResponse.of(ErrorCode.INVALID_REQUEST);
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
     }
 
     @ExceptionHandler(HomeProtectException.class)

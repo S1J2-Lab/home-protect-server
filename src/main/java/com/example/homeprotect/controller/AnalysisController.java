@@ -35,7 +35,7 @@ public class AnalysisController implements AnalysisControllerDocs {
 
     @PostMapping("/init")
     public Mono<ResponseEntity<Map<String, Object>>> initAnalysis(
-            @Valid @RequestBody AnalysisInitRequest request) {
+            @RequestBody AnalysisInitRequest request) {
         return analysisService.initAnalysis(request)
                 .map(sessionId -> {
                     Map<String, Object> inner = new LinkedHashMap<>();

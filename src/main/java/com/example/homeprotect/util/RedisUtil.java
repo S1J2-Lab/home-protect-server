@@ -149,7 +149,7 @@ public class RedisUtil {
     public Mono<AnalysisResult> getAnalysisResult(String sessionId) {
         String key = ANALYSIS_RESULT_KEY_PREFIX + sessionId;
         return reactiveRedisTemplate.opsForValue().get(key)
-            .switchIfEmpty(Mono.error(new HomeProtectException(ErrorCode.ANALYSIS_NOT_COMPLETE)))
+            .switchIfEmpty(Mono.error(new HomeProtectException(ErrorCode.SESSION_EXPIRED)))
             .flatMap(json -> deserialize(json, AnalysisResult.class));
     }
 
